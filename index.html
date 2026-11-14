@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F3F1EC">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Debt Drop">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>Debt Drop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3F1EC; --surface:#FFFFFF; --ink:#17171C; --muted:#6E6E78; --line:#E7E4DD;
+  --soft:#F8F7F3; --good:#16A36F; --goodSoft:#E3F6EE; --warn:#E8833A; --warnSoft:#FDEFE3;
+  --accent:#4B5BFF; --r:22px; --shadow:0 1px 2px rgba(20,20,30,.04),0 8px 24px rgba(20,20,30,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{padding-top:env(safe-area-inset-top);font-family:'Outfit',system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:110px;line-height:1.4}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+.wrap{max-width:1040px;margin:0 auto;padding:22px 18px}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:22px;letter-spacing:-.02em}
+.logo .drop{width:30px;height:30px;border-radius:10px;background:linear-gradient(145deg,#4B5BFF,#16A36F);display:grid;place-items:center;color:#fff;font-size:16px}
+.ico{display:inline-block;vertical-align:middle;flex:none}
+.pill{font-size:12px;font-weight:500;padding:6px 11px;border-radius:99px;background:var(--surface);color:var(--muted);border:1px solid var(--line);display:flex;align-items:center;gap:6px}
+.pill i{width:7px;height:7px;border-radius:50%;background:#bbb;display:inline-block}
+.pill.ok i{background:var(--good)} .pill.local i{background:var(--warn)}
+
+/* hero */
+.hero{background:var(--ink);color:#fff;border-radius:28px;padding:26px;display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;position:relative;overflow:hidden}
+.hero:after{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(75,91,255,.45),transparent 70%)}
+.hero .lbl{font-size:13px;color:#A9A9B6;font-weight:500;letter-spacing:.02em}
+.hero .big{font-size:46px;font-weight:800;letter-spacing:-.03em;line-height:1.05;margin:4px 0 12px;font-variant-numeric:tabular-nums}
+.hero .stats{display:flex;gap:22px;flex-wrap:wrap}
+.hero .stats b{display:block;font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
+.hero .stats span{font-size:12px;color:#A9A9B6}
+.ring{position:relative;width:120px;height:120px;z-index:1}
+.ring svg{transform:rotate(-90deg)}
+.ring .pct{position:absolute;inset:0;display:grid;place-items:center;text-align:center;font-weight:800;font-size:24px}
+.ring .pct small{display:block;font-size:11px;font-weight:500;color:#A9A9B6}
+
+section{margin-top:26px}
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px}
+.sh h2{font-size:19px;font-weight:700;letter-spacing:-.01em}
+.sh p{font-size:13px;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 16px;border-radius:14px;font-weight:600;font-size:14px;background:var(--surface);border:1px solid var(--line);transition:transform .15s}
+.btn:active{transform:scale(.97)}
+.btn.dark{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn.good{background:var(--good);color:#fff;border-color:var(--good)}
+.btn.danger{color:#D23B3B}
+.btn.sm{padding:7px 12px;font-size:13px;border-radius:11px}
+
+/* cards grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.tile{position:relative;background:var(--surface);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);overflow:hidden;text-align:left;width:100%;transition:transform .2s}
+.tile:hover{transform:translateY(-2px)}
+.tile .tint{position:absolute;inset:0;opacity:.09;pointer-events:none}
+.tile .top{display:flex;justify-content:space-between;align-items:center;position:relative}
+.tile .name{font-weight:700;font-size:16px;display:flex;align-items:center;gap:8px}
+.tile .dot{width:12px;height:12px;border-radius:4px}
+.tile .bal{font-size:30px;font-weight:800;letter-spacing:-.02em;margin:10px 0 2px;font-variant-numeric:tabular-nums;position:relative}
+.tile .of{font-size:12.5px;color:var(--muted);position:relative}
+.bar{height:9px;border-radius:99px;background:var(--soft);margin:12px 0 10px;overflow:hidden;position:relative;border:1px solid var(--line)}
+.bar i{display:block;height:100%;border-radius:99px;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.tile .meta{display:flex;gap:12px;font-size:12px;color:var(--muted);position:relative}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:4px 9px;border-radius:99px;background:var(--ink);color:#fff;letter-spacing:.02em}
+.badge.paid{background:var(--good)}
+.tile.isPaid .bal{color:var(--good)}
+.tile.shake{animation:shake .5s}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateY(4px) scale(.99)}50%{transform:translateY(-2px)}75%{transform:translateY(1px)}}
+.addTile{border:2px dashed #D6D2C8;background:transparent;box-shadow:none;display:grid;place-items:center;min-height:170px;color:var(--muted);font-weight:600}
+.addTile span{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:var(--surface);margin:0 auto 8px;border:1px solid var(--line);color:var(--ink)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.15fr 1fr;gap:14px}
+.panel{background:var(--surface);border-radius:var(--r);padding:20px;box-shadow:var(--shadow)}
+.seg{display:inline-flex;background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px}
+.seg button{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;font-weight:600;font-size:13.5px;color:var(--muted)}
+.seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.field{display:flex;flex-direction:column;gap:6px;margin-top:14px}
+.field label{font-size:12.5px;font-weight:600;color:var(--muted)}
+.inp{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--soft);font-size:16px;outline:none;transition:border .15s}
+.inp:focus{border-color:var(--ink);background:#fff}
+.money{position:relative}.money .inp{padding-left:28px}.money:before{content:"$";position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:600}
+.focus{margin-top:16px;border-radius:18px;padding:16px;color:#fff;position:relative;overflow:hidden}
+.focus small{font-size:12px;opacity:.85;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.focus h3{font-size:22px;font-weight:800;margin:2px 0 4px}
+.focus p{font-size:13.5px;opacity:.92}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.kpi{background:var(--soft);border-radius:14px;padding:12px;border:1px solid var(--line)}
+.kpi b{display:block;font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi span{font-size:11.5px;color:var(--muted)}
+.order{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+.order div{display:flex;align-items:center;gap:10px;font-size:14px}
+.order .n{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff}
+.order .when{margin-left:auto;color:var(--muted);font-size:13px}
+.note{font-size:13px;color:var(--muted);margin-top:10px}
+.warnbox{background:var(--warnSoft);color:#9A4A12;border-radius:14px;padding:12px 14px;font-size:13.5px;margin-top:14px}
+.goodbox{display:flex;gap:10px;align-items:flex-start;background:var(--goodSoft);color:#0C6B47;border-radius:14px;padding:12px 14px;font-size:13.5px;margin-top:14px}
+
+.idea{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.idea:last-of-type{border-bottom:none}
+.idea .ic{width:36px;height:36px;border-radius:12px;background:var(--soft);border:1px solid var(--line);display:grid;place-items:center;flex:none;color:var(--ink)}
+.idea .tx{flex:1;min-width:0}
+.idea .tx b{font-size:14px;font-weight:600;display:block}
+.idea .tx span{font-size:12px;color:var(--muted)}
+.idea .money{width:92px;flex:none}.idea .inp{padding:9px 10px 9px 24px;font-size:15px}.idea .money:before{left:11px}
+
+.tips{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.tip{background:var(--surface);border-radius:18px;padding:16px;box-shadow:var(--shadow);display:flex;gap:12px}
+.tip .ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex:none;background:var(--soft);color:var(--ink);border:1px solid var(--line)}
+.tip.hl .ic{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tip b{font-size:14.5px;display:block;margin-bottom:3px}
+.tip p{font-size:13px;color:var(--muted)}
+
+.hist{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.hrow{display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid var(--line)}
+.hrow:last-child{border-bottom:none}
+.hrow .dot{width:10px;height:10px;border-radius:3px;flex:none}
+.hrow .w{flex:1;min-width:0}
+.hrow .w b{font-size:14.5px;font-weight:600}
+.hrow .w span{display:block;font-size:12px;color:var(--muted)}
+.hrow .amt{font-weight:700;font-variant-numeric:tabular-nums}
+.hrow .amt.pay{color:var(--good)} .hrow .amt.chg{color:#D23B3B}
+.hrow .x{color:#B5B2AA;font-size:18px;padding:4px 8px;border-radius:8px}
+.hrow .x:hover{background:var(--soft);color:#D23B3B}
+.empty{padding:28px;text-align:center;color:var(--muted);font-size:14px}
+
+.fab{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:30;padding:16px 26px;border-radius:20px;background:var(--ink);color:#fff;font-weight:700;font-size:16px;box-shadow:0 10px 30px rgba(20,20,30,.3);display:flex;align-items:center;gap:8px;transition:transform .15s}
+.fab:active{transform:translateX(-50%) scale(.96)}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(15,15,20,.45);backdrop-filter:blur(3px);z-index:50;display:none;align-items:flex-end;justify-content:center}
+.scrim.open{display:flex;animation:fade .2s}
+.sheet{background:var(--surface);width:100%;max-width:480px;border-radius:26px 26px 0 0;padding:22px 20px 28px;max-height:92vh;overflow:auto;animation:up .28s cubic-bezier(.2,.8,.2,1)}
+@media(min-width:700px){.scrim{align-items:center}.sheet{border-radius:26px}}
+.sheet h3{font-size:21px;font-weight:800;margin-bottom:4px}
+.sheet .sub{font-size:13.5px;color:var(--muted)}
+.sheet .acts{display:flex;gap:10px;margin-top:20px}
+.sheet .acts .btn{flex:1;padding:14px}
+@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.swatches{display:flex;flex-wrap:wrap;gap:10px}
+.sw{width:34px;height:34px;border-radius:11px;border:3px solid transparent;transition:transform .15s}
+.sw.on{border-color:var(--ink);transform:scale(1.08)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:9px 13px;border-radius:12px;border:1.5px solid var(--line);font-weight:600;font-size:14px;display:flex;align-items:center;gap:7px;background:var(--soft)}
+.chip i{width:10px;height:10px;border-radius:3px}
+.chip.on{border-color:var(--ink);background:#fff}
+.quick{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.quick button{padding:6px 11px;border-radius:10px;background:var(--soft);border:1px solid var(--line);font-size:13px;font-weight:600}
+textarea.inp{min-height:110px;font-size:12px;font-family:ui-monospace,Consolas,monospace}
+
+/* drop animation */
+.coin{position:fixed;z-index:60;pointer-events:none;padding:9px 15px;border-radius:99px;color:#fff;font-weight:800;font-size:17px;box-shadow:0 8px 20px rgba(0,0,0,.25);white-space:nowrap}
+.ripple{position:absolute;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%) scale(0);width:260px;height:260px;opacity:.35;animation:rip .8s ease-out forwards}
+@keyframes rip{to{transform:translate(-50%,-50%) scale(1.6);opacity:0}}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:70}
+.celebrate{text-align:center;padding-top:6px}
+.celebrate .em{width:84px;height:84px;border-radius:28px;margin:0 auto;display:grid;place-items:center;color:#fff;box-shadow:0 12px 30px rgba(0,0,0,.18);animation:pop .6s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{from{transform:scale(0) rotate(-20deg)}to{transform:none}}
+.toast{position:fixed;left:50%;top:18px;transform:translate(-50%,-80px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:14px;font-size:14px;font-weight:600;z-index:80;transition:transform .35s cubic-bezier(.2,.8,.2,1);max-width:90vw;text-align:center}
+.toast.show{transform:translate(-50%,0)}
+.tile .meta{flex-wrap:wrap}
+.due{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;margin-top:10px;position:relative;padding:6px 10px;border-radius:10px;width:max-content;max-width:100%;background:var(--soft);color:var(--muted);border:1px solid var(--line)}
+.due.soon{background:var(--warnSoft);color:#9A4A12;border-color:#F6D3B5}
+.due.miss{background:#FCE8E8;color:#B32626;border-color:#F3C2C2}
+.dueRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;position:relative}.dueRow .due{margin-top:0}
+.dueAct{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;padding:6px 11px;border-radius:10px;background:var(--ink);color:#fff;cursor:pointer}
+.dueRow .due.ok+.dueAct{background:transparent;color:var(--muted);text-decoration:underline;padding:6px 4px}
+.due.ok{background:var(--goodSoft);color:#0C6B47;border-color:#BFE9D6}
+.upcoming{display:flex;gap:10px;overflow-x:auto;padding:4px 4px 14px;margin:-4px -4px 2px;scrollbar-width:none}
+.upcoming::-webkit-scrollbar{display:none}
+.up{flex:none;display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:16px;padding:10px 14px;box-shadow:var(--shadow);text-align:left}
+.up .sq{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;color:#fff;flex:none}
+.up b{font-size:14px;display:block}.up span{font-size:12px;color:var(--muted)}
+.up.miss span{color:#B32626;font-weight:600}.up.soon span{color:#9A4A12;font-weight:600}
+.upnote{font-size:13px;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.chartWrap{background:var(--surface);border-radius:var(--r);padding:18px 16px 12px;box-shadow:var(--shadow)}
+.chartWrap svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px;padding-left:4px}
+.legend i{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.intRow{display:flex;flex-direction:column;gap:9px;margin-top:14px}
+.intRow div{display:flex;align-items:center;gap:10px;font-size:13.5px}
+.intRow .track{flex:1;height:8px;border-radius:99px;background:var(--soft);border:1px solid var(--line);overflow:hidden}
+.intRow .track i{display:block;height:100%;border-radius:99px}
+.intRow .nm{width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.intRow .v{width:70px;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+#auth{position:fixed;inset:0;z-index:90;background:var(--bg);display:none;align-items:center;justify-content:center;padding:20px}
+#auth.open{display:flex}
+.authCard{width:100%;max-width:400px;background:var(--surface);border-radius:26px;padding:26px 22px;box-shadow:var(--shadow)}
+.authCard h3{font-size:22px;font-weight:800;margin-bottom:4px}
+.pill{cursor:pointer}
+.nbox{display:flex;gap:12px;align-items:center;margin-top:16px;padding:14px;border-radius:16px;background:var(--soft);border:1px solid var(--line)}
+.nbox .sq{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line);flex:none}
+.nbox.on{background:var(--goodSoft);border-color:#BFE9D6}.nbox.on .sq{background:var(--good);color:#fff;border-color:var(--good)}
+.nbox b{display:block;font-size:15px}.nbox span{font-size:12.5px;color:var(--muted)}
+.tog{display:flex;align-items:center;gap:12px;margin-top:14px;cursor:pointer}
+.tog span{flex:1}.tog b{display:block;font-size:14.5px}.tog small{font-size:12.5px;color:var(--muted)}
+.tog input{display:none}
+.tog i{width:46px;height:28px;border-radius:99px;background:#D9D5CC;position:relative;transition:background .2s;flex:none}
+.tog i:after{content:"";position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .2s}
+.tog input:checked+i{background:var(--good)}.tog input:checked+i:after{transform:translateX(18px)}
+#nDays{display:grid;grid-template-columns:repeat(5,1fr)}#nDays button{padding:8px 2px;justify-content:center;font-size:13px}
+.authCard .acts{display:flex;gap:10px}.authCard .acts .btn{flex:1;padding:14px}
+.foot{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:28px}
+
+@media(max-width:760px){
+  .cols{grid-template-columns:1fr}
+  .hero{grid-template-columns:1fr;padding:22px}
+  .hero .big{font-size:40px}
+  .ring{position:absolute;right:18px;top:18px;width:84px;height:84px}
+  .ring svg{width:84px;height:84px}
+  .ring .pct{font-size:18px}
+  .kpis{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+<div class="toast" id="toast"></div>
+
+<div class="wrap">
+  <header>
+    <div class="logo"><div class="drop"><svg class="ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M6 14l6 6 6-6"/></svg></div>Debt Drop</div>
+    <div class="pill" id="sync"><i></i><span>Loading…</span></div>
+  </header>
+
+  <div class="hero">
+    <div style="position:relative;z-index:1">
+      <div class="lbl">TOTAL DEBT REMAINING</div>
+      <div class="big" id="hTotal">$0</div>
+      <div class="stats">
+        <div><b id="hPaid">$0</b><span>paid down so far</span></div>
+        <div><b id="hFree">—</b><span>debt-free date</span></div>
+        <div><b id="hCards">0</b><span>cards paid off</span></div>
+        <div><b id="hInt">$0</b><span>interest / month</span></div>
+      </div>
+    </div>
+    <div class="ring">
+      <svg width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="11"/><circle id="ringArc" cx="60" cy="60" r="50" fill="none" stroke="#3DDC97" stroke-width="11" stroke-linecap="round" stroke-dasharray="314.16" stroke-dashoffset="314.16" style="transition:stroke-dashoffset 1.2s cubic-bezier(.2,.8,.2,1)"/></svg>
+      <div class="pct"><div><span id="hPct">0%</span><small>paid</small></div></div>
+    </div>
+  </div>
+
+  <section>
+    <div class="sh"><div><h2>Your cards</h2><p>Tap a card to edit it</p></div></div>
+    <div id="upcoming"></div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section>
+    <div class="sh"><div><h2>Your progress</h2><p id="chartSub">Total debt over time</p></div></div>
+    <div class="cols">
+      <div class="chartWrap"><div id="chart"></div><div class="legend"><span><i style="background:#16A36F"></i>Actual</span><span><i style="background:repeating-linear-gradient(90deg,#9A9AA6 0 5px,transparent 5px 9px)"></i>Projected with your plan</span></div></div>
+      <div class="panel" id="interest"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sh"><div><h2>Your payoff plan</h2><p>Which card to attack first, and when you'll be free</p></div></div>
+    <div class="cols">
+      <div class="panel" id="plan"></div>
+      <div class="panel">
+        <h3 style="font-size:17px;font-weight:700">Find extra money</h3>
+        <p class="note" style="margin-top:4px">No new income needed — enter what you could free up each month and watch your debt-free date move.</p>
+        <div id="ideas" style="margin-top:8px"></div>
+        <div id="boostOut"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sh"><div><h2>Smart tips</h2><p>Based on your cards right now</p></div></div>
+    <div class="tips" id="tips"></div>
+  </section>
+
+  <section>
+    <div class="sh"><div><h2>History</h2><p id="histSub">Every payment you log</p></div></div>
+    <div class="hist" id="hist"></div>
+  </section>
+
+  <div class="foot">
+    <button class="btn sm" id="acctBtn">Account and reminders</button>
+    <button class="btn sm" id="backupBtn">Back up / restore</button>
+    <button class="btn sm danger" id="resetBtn">Start over</button>
+  </div>
+</div>
+
+<button class="fab" id="fab"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> Log payment</button>
+
+<div class="scrim" id="scrim"><div class="sheet" id="sheet"></div></div>
+<div id="auth"></div>
+
+<script src="config.js"></script>
+<script type="module">
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const COLORS = ['#FF6B6B','#FF9F43','#F2C230','#2ECC9A','#3BA7FF','#7C5CFF','#FF5FA2','#18B9B9','#8B8F9C','#2B2F3A'];
+const fmt = (n, c=0) => (n<0?'-':'') + '$' + Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:c,maximumFractionDigits:c});
+const fmt2 = n => fmt(n, Math.abs(n) % 1 ? 2 : 0);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+const today = () => { const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const num = v => { const n = parseFloat(String(v).replace(/[^0-9.\-]/g,'')); return isFinite(n) ? n : 0; };
+const round2 = n => Math.round(n*100)/100;
+function monthLabel(m){ const d = new Date(); d.setDate(1); d.setMonth(d.getMonth()+m); return d.toLocaleDateString('en-US',{month:'short',year:'numeric'}); }
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2600); }
+
+const ICONS = {
+  tv:'<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/>',
+  food:'<path d="M5 3v6a3 3 0 0 0 6 0V3M8 3v18M18 21V3a4 4 0 0 0-3.5 4v6H18"/>',
+  coffee:'<path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9z"/><path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17M8 3v3M12 3v3"/>',
+  phone:'<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M11 18h2"/>',
+  box:'<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8M12 13v8"/>',
+  coins:'<ellipse cx="9" cy="7" rx="6" ry="3"/><path d="M3 7v5c0 1.7 2.7 3 6 3s6-1.3 6-3V7"/><path d="M9 15v2c0 1.7 2.7 3 6 3s6-1.3 6-3v-5c0-1.6-2.4-2.9-5.5-3"/>',
+  call:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>',
+  transfer:'<path d="M4 8h15l-4-4M20 16H5l4 4"/>',
+  target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  stop:'<path d="M8 2.5h8L21.5 8v8L16 21.5H8L2.5 16V8z"/><path d="M12 8v5M12 16.5v.01"/>',
+  calendar:'<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+  card:'<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4"/>',
+  gift:'<rect x="3.5" y="8" width="17" height="4" rx="1"/><path d="M5 12v8.5h14V12M12 8v12.5M12 8c-1.5-4-6-4-6-1.5S10 8 12 8zm0 0c1.5-4 6-4 6-1.5S14 8 12 8z"/>',
+  trophy:'<path d="M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M12 14v3M8 21h8M9.5 17h5v4h-5z"/>',
+  sparkle:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.7 1.8 1.8.7-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7z"/>',
+  bolt:'<path d="M13 2.5L4.5 13.5H12l-1 8 8.5-11H12z"/>',
+  snow:'<path d="M12 2.5v19M3.8 7.2l16.4 9.6M3.8 16.8l16.4-9.6M9.5 4l2.5 2 2.5-2M9.5 20l2.5-2 2.5 2"/>',
+  drop:'<path d="M12 3s6.5 7 6.5 11.5a6.5 6.5 0 0 1-13 0C5.5 10 12 3 12 3z"/>',
+  down:'<path d="M3 7l6.5 6.5 4-4L21 17"/><path d="M15 17h6v-6"/>',
+  arrowDown:'<path d="M12 4v16M6 14l6 6 6-6"/>',
+  arrowRight:'<path d="M4 12h16M14 6l6 6-6 6"/>',
+  check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  checkCircle:'<circle cx="12" cy="12" r="9.5"/><path d="M7.5 12.5l3 3 6-6.5"/>',
+  wave:'<path d="M3 12h3l3-7 4 14 3-7h5"/>',
+};
+const I = (n, s=20, w=2) => `<svg class="ico" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${ICONS[n]||''}</svg>`;
+const IDEAS = [
+  {k:'subs', ic:'tv', t:'Cancel unused subscriptions', s:'Streaming, apps, gym you skip'},
+  {k:'food', ic:'food', t:'Cook 2 more meals at home / week', s:'Swap takeout & delivery fees'},
+  {k:'coffee', ic:'coffee', t:'Trim small daily buys', s:'Coffee runs, snacks, impulse adds'},
+  {k:'bills', ic:'phone', t:'Lower a bill', s:'Phone plan, insurance, internet quote'},
+  {k:'sell', ic:'box', t:'Sell things you don\'t use', s:'Spread it out as a monthly amount'},
+  {k:'round', ic:'coins', t:'Round up every payment', s:'Pay $213 as $250. Small, painless'},
+];
+
+/* ---------- state ---------- */
+const blank = () => ({ debts:[], payments:[], budget:null, strategy:'avalanche', boosts:{}, updatedAt:0 });
+let S = blank();
+let mode = 'loading';  // 'cloud' | 'local' | 'loading'
+let saving = false, saveAgain = false, saveTimer = null;
+const CFG = self.DEBT_DROP_CONFIG || {};
+const FB_VER = '10.12.2', FB_BASE = `https://www.gstatic.com/firebasejs/${FB_VER}/`;
+let fb = null, user = null, unsub = null;
+let push = { tokens:[], remindDays:3, dueDay:true, missed:true, enabled:true };
+const LKEY = () => 'debtdrop.v1' + (user ? '.' + user.uid : '');
+
+function loadLocal(){ try{ const j = localStorage.getItem(LKEY()); if(j) return JSON.parse(j); }catch(e){} return null; }
+function saveLocal(){ try{ localStorage.setItem(LKEY(), JSON.stringify(S)); }catch(e){} }
+function normalize(d){ const b = blank(); d = d && typeof d==='object' ? d : {}; return { ...b, ...d, debts:Array.isArray(d.debts)?d.debts:[], payments:Array.isArray(d.payments)?d.payments:[], boosts:d.boosts&&typeof d.boosts==='object'?d.boosts:{} }; }
+const configured = () => !!(CFG.firebase && CFG.firebase.apiKey && !String(CFG.firebase.apiKey).startsWith('PASTE'));
+
+function commit(){ S.updatedAt = Date.now(); saveLocal(); render(); queueSave(); }
+function queueSave(){ if(!fb || !fb.ref) return; clearTimeout(saveTimer); saveTimer = setTimeout(pushRemote, 500); }
+async function pushRemote(){
+  if(!fb || !fb.ref) return;
+  if(saving){ saveAgain = true; return; }
+  saving = true;
+  const payload = JSON.parse(JSON.stringify(S));
+  try{
+    try{ await fb.F.updateDoc(fb.ref, { state: payload }); }
+    catch(e){ if(e && e.code==='not-found') await fb.F.setDoc(fb.ref, { state: payload }, { merge:true }); else throw e; }
+    setSync('cloud');
+  }catch(e){ setSync('local'); }
+  saving = false;
+  if(saveAgain){ saveAgain = false; pushRemote(); }
+}
+async function savePush(partial){
+  push = { ...push, ...partial };
+  if(!fb || !fb.ref) return;
+  try{ await fb.F.setDoc(fb.ref, { push: partial }, { merge:true }); }catch(e){ toast('Couldn\'t save that setting. Check your connection.'); }
+}
+function setSync(m){
+  mode = m; const p = $('#sync');
+  p.className = 'pill ' + (m==='cloud'?'ok':m==='local'?'local':'');
+  p.querySelector('span').textContent = m==='cloud' ? 'Synced' : m==='local' ? (configured() ? 'Offline' : 'This device only') : 'Loading…';
+}
+
+async function initStore(){
+  const local = loadLocal(); if(local) S = normalize(local);
+  render();
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js').catch(()=>{}); }
+  if(!configured()){ setSync('local'); return; }
+  try{
+    const [A, Au, F] = await Promise.all([import(FB_BASE+'firebase-app.js'), import(FB_BASE+'firebase-auth.js'), import(FB_BASE+'firebase-firestore.js')]);
+    const app = A.initializeApp(CFG.firebase);
+    fb = { app, Au, F, auth: Au.getAuth(app), db: F.getFirestore(app) };
+  }catch(e){ setSync('local'); toast('Can\'t reach sync right now. Working offline.'); return; }
+  fb.Au.onAuthStateChanged(fb.auth, u => {
+    user = u;
+    if(u){ closeAuth(); const l = loadLocal(); S = l ? normalize(l) : blank(); render(); startSync(); listenForeground(); }
+    else { if(unsub){ unsub(); unsub = null; } fb.ref = null; S = blank(); render(); showAuth(); }
+  });
+}
+function startSync(){
+  fb.ref = fb.F.doc(fb.db, 'users', user.uid);
+  let first = true; setSync('loading');
+  const timer = setTimeout(()=>{ if(first) setSync('local'); }, 10000);
+  unsub = fb.F.onSnapshot(fb.ref, snap => {
+    const data = snap.exists() ? snap.data() : null;
+    if(data && data.push) push = { ...push, ...data.push };
+    if(snap.metadata.hasPendingWrites) return;
+    const remote = data && data.state ? normalize(data.state) : null;
+    if(first){ first = false; clearTimeout(timer); setSync('cloud'); if(!remote && S.updatedAt>0) queueSave(); }
+    if(remote && remote.updatedAt > S.updatedAt){ S = remote; saveLocal(); render(); }
+    else if(remote && remote.updatedAt < S.updatedAt) queueSave();
+  }, () => { clearTimeout(timer); setSync('local'); });
+}
+
+/* ---------- sign in ---------- */
+function showAuth(msg){
+  const el = $('#auth'); el.classList.add('open');
+  el.innerHTML = `<div class="authCard">
+    <div class="logo" style="justify-content:center;margin-bottom:18px"><div class="drop">${I('arrowDown',17,2.6)}</div>Debt Drop</div>
+    <h3 style="text-align:center">Sign in to your tracker</h3>
+    <p class="sub" style="text-align:center">Your cards and payments sync between your phone and computer.</p>
+    <div class="field"><label>Email</label><input class="inp" id="aEmail" type="email" autocomplete="email" placeholder="you@example.com"></div>
+    <div class="field"><label>Password</label><input class="inp" id="aPass" type="password" autocomplete="current-password" placeholder="At least 6 characters"></div>
+    <p class="note" id="aErr" style="color:#B32626;min-height:18px">${msg?esc(msg):''}</p>
+    <div class="acts" style="margin-top:8px"><button class="btn" id="aNew">Create account</button><button class="btn dark" id="aIn">Sign in</button></div>
+    <button class="btn sm" id="aForgot" style="margin:14px auto 0;display:flex;border:none;background:none;color:var(--muted)">Forgot password?</button>
+  </div>`;
+  const err = m => $('#aErr').textContent = m;
+  const nice = e => ({'auth/invalid-credential':'Email or password is wrong.','auth/wrong-password':'Email or password is wrong.','auth/user-not-found':'No account with that email. Tap Create account.','auth/email-already-in-use':'That email already has an account. Tap Sign in.','auth/weak-password':'Use at least 6 characters.','auth/invalid-email':'That email doesn\'t look right.','auth/too-many-requests':'Too many tries. Wait a minute and try again.','auth/network-request-failed':'No connection. Check your internet.'}[e && e.code] || 'Something went wrong. Try again.');
+  const vals = () => [$('#aEmail').value.trim(), $('#aPass').value];
+  $('#aIn').onclick = async () => { const [e,p] = vals(); if(!e||!p) return err('Enter your email and password.'); try{ await fb.Au.signInWithEmailAndPassword(fb.auth, e, p); }catch(x){ err(nice(x)); } };
+  $('#aNew').onclick = async () => { const [e,p] = vals(); if(!e||!p) return err('Enter an email and a password to create your account.'); try{ await fb.Au.createUserWithEmailAndPassword(fb.auth, e, p); toast('Account created'); }catch(x){ err(nice(x)); } };
+  $('#aForgot').onclick = async () => { const [e] = vals(); if(!e) return err('Enter your email first.'); try{ await fb.Au.sendPasswordResetEmail(fb.auth, e); err(''); toast('Reset link sent. Check your email.'); }catch(x){ err(nice(x)); } };
+  $('#aPass').onkeydown = ev => { if(ev.key==='Enter') $('#aIn').click(); };
+}
+function closeAuth(){ $('#auth').classList.remove('open'); $('#auth').innerHTML=''; }
+
+/* ---------- notifications ---------- */
+const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+const isStandalone = () => window.navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+const deviceOn = () => { try{ const t = localStorage.getItem('debtdrop.token'); return !!t && (push.tokens||[]).includes(t) && 'Notification' in window && Notification.permission==='granted'; }catch(e){ return false; } };
+let fgListening = false;
+async function getMessagingParts(){
+  const M = await import(FB_BASE+'firebase-messaging.js');
+  if(!(await M.isSupported())) throw new Error('unsupported');
+  const reg = await navigator.serviceWorker.register('./sw.js');
+  await navigator.serviceWorker.ready;
+  return { M, reg, messaging: M.getMessaging(fb.app) };
+}
+async function listenForeground(){
+  if(fgListening || !('Notification' in window) || Notification.permission!=='granted') return;
+  try{ const { M, messaging } = await getMessagingParts(); fgListening = true; M.onMessage(messaging, p => { const n = p.notification||{}; toast((n.title||'Debt Drop') + (n.body ? ' — ' + n.body : '')); }); }catch(e){}
+}
+async function enableNotifications(){
+  if(!fb || !user){ toast('Sign in first'); return; }
+  if(isIOS() && !isStandalone()){ openNotify(); return; }
+  if(!('Notification' in window) || !('serviceWorker' in navigator)){ toast('This browser can\'t show notifications.'); return; }
+  const perm = await Notification.requestPermission();
+  if(perm !== 'granted'){ toast('Notifications are blocked. Allow them in your device settings.'); openNotify(); return; }
+  try{
+    const { M, reg, messaging } = await getMessagingParts();
+    const token = await M.getToken(messaging, { vapidKey: CFG.vapidKey, serviceWorkerRegistration: reg });
+    if(!token) throw new Error('no token');
+    try{ localStorage.setItem('debtdrop.token', token); }catch(e){}
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Los_Angeles';
+    push.tokens = [...new Set([...(push.tokens||[]), token])];
+    await fb.F.setDoc(fb.ref, { push: { tokens: fb.F.arrayUnion(token), enabled:true, tz } }, { merge:true });
+    listenForeground();
+    toast('Notifications are on for this device');
+  }catch(e){ toast('Couldn\'t turn on notifications. Check the setup guide.'); }
+  openNotify();
+}
+async function disableNotifications(){
+  let t = null; try{ t = localStorage.getItem('debtdrop.token'); localStorage.removeItem('debtdrop.token'); }catch(e){}
+  if(t && fb && fb.ref){ push.tokens = (push.tokens||[]).filter(x=>x!==t); try{ await fb.F.setDoc(fb.ref, { push: { tokens: fb.F.arrayRemove(t) } }, { merge:true }); }catch(e){} }
+  toast('Notifications are off for this device'); openNotify();
+}
+async function testNotification(){
+  try{
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification('Debt Drop', { body:'Notifications are working on this device.', icon:'./icon-192.png', badge:'./icon-192.png' });
+  }catch(e){ toast('Couldn\'t show a test. Make sure notifications are allowed.'); }
+}
+function openNotify(){
+  if(!configured()){ openSheet(`<h3>Notifications</h3><p class="sub">Finish the setup guide (Firebase config) to turn on sync and reminders.</p><div class="acts"><button class="btn dark" id="nClose">Got it</button></div>`); $('#nClose').onclick = closeSheet; return; }
+  const on = deviceOn();
+  const needInstall = isIOS() && !isStandalone();
+  const rd = push.remindDays ?? 3;
+  openSheet(`<h3>Account and reminders</h3><p class="sub">Signed in as ${esc(user ? user.email : '')}</p>
+    <div class="nbox ${on?'on':''}"><div class="sq">${I(on?'check':'calendar',18)}</div><div style="flex:1"><b>${on?'Notifications are on':'Notifications are off'}</b><span>${on?'This device gets payment reminders.':'Turn them on to get reminders before each due date.'}</span></div></div>
+    ${needInstall ? `<div class="warnbox"><b>First, add Debt Drop to your Home Screen.</b><br>iPhone only allows notifications from apps on your Home Screen: tap the Share button in Safari, then <b>Add to Home Screen</b>. Open Debt Drop from that icon and come back here.</div>` :
+      on ? `<div class="acts" style="margin-top:12px"><button class="btn" id="nTest">Send a test</button><button class="btn danger" id="nOff">Turn off</button></div>` :
+      `<div class="acts" style="margin-top:12px"><button class="btn good" id="nOn">${I('calendar',17)} Turn on notifications</button></div>`}
+    <div class="field"><label>Remind me before each due date</label><div class="seg" id="nDays">${[1,2,3,5,7].map(n=>`<button data-n="${n}" class="${n===rd?'on':''}">${n} day${n>1?'s':''}</button>`).join('')}</div></div>
+    <label class="tog"><span><b>Due-day alert</b><small>Another reminder on the due date if it's not logged yet</small></span><input type="checkbox" id="nDue" ${push.dueDay!==false?'checked':''}><i></i></label>
+    <label class="tog"><span><b>Missed-payment check</b><small>Alerts you the day after a due date with no payment logged</small></span><input type="checkbox" id="nMiss" ${push.missed!==false?'checked':''}><i></i></label>
+    <p class="note">Reminders arrive around 8–9 AM. A reminder is skipped once you log a payment for that card.</p>
+    <div class="acts"><button class="btn" id="nOut">Sign out</button><button class="btn dark" id="nDone">Done</button></div>`);
+  if($('#nOn')) $('#nOn').onclick = enableNotifications;
+  if($('#nOff')) $('#nOff').onclick = disableNotifications;
+  if($('#nTest')) $('#nTest').onclick = testNotification;
+  $('#nDays').querySelectorAll('button').forEach(b=>b.onclick=()=>{ $('#nDays').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); savePush({ remindDays: +b.dataset.n }); });
+  $('#nDue').onchange = e => savePush({ dueDay: e.target.checked });
+  $('#nMiss').onchange = e => savePush({ missed: e.target.checked });
+  $('#nDone').onclick = closeSheet;
+  $('#nOut').onclick = () => confirmBox('Sign out?','Your data stays saved in your account.','Sign out', async ()=>{ try{ localStorage.removeItem(LKEY()); }catch(e){} await fb.Au.signOut(fb.auth); });
+}
+
+/* ---------- derived ---------- */
+function balOf(d){
+  let b = num(d.start);
+  for(const p of S.payments) if(p.debtId===d.id) b += p.type==='charge' ? num(p.amount) : -num(p.amount);
+  return Math.max(0, round2(b));
+}
+function charged(d){ return S.payments.filter(p=>p.debtId===d.id && p.type==='charge').reduce((s,p)=>s+num(p.amount),0); }
+function minSum(){ return S.debts.filter(d=>balOf(d)>0).reduce((s,d)=>s+Math.min(num(d.min), balOf(d)),0); }
+function budget(){ return S.budget==null ? minSum() : num(S.budget); }
+function boostTotal(){ return Object.values(S.boosts||{}).reduce((s,v)=>s+num(v),0); }
+const prio = strat => (a,b) => strat==='snowball' ? (a.b-b.b) || (b.r-a.r) : (b.r-a.r) || (a.b-b.b);
+
+function simulate(monthly, strat, rollover=true){
+  let ds = S.debts.map(d=>({id:d.id,name:d.name,color:d.color,b:balOf(d),r:num(d.apr)/1200,m:num(d.min)})).filter(d=>d.b>0.005);
+  if(!ds.length) return {ok:true, months:0, interest:0, order:[], track:[]};
+  let month=0, interest=0; const order=[], track=[];
+  while(ds.some(d=>d.b>0.005) && month<600){
+    month++;
+    for(const d of ds) if(d.b>0){ const i=d.b*d.r; d.b+=i; interest+=i; }
+    let avail = rollover ? monthly : Infinity;
+    for(const d of ds) if(d.b>0){ const p=Math.min(d.m,d.b,avail); d.b-=p; avail-=p; }
+    if(rollover){ for(const d of ds.filter(x=>x.b>0.005).sort(prio(strat))){ if(avail<=0) break; const p=Math.min(avail,d.b); d.b-=p; avail-=p; } }
+    for(const d of ds) if(d.b<=0.005 && !d.done){ d.done=true; d.b=0; order.push({id:d.id,name:d.name,color:d.color,month}); }
+    track.push(ds.reduce((s,d)=>s+Math.max(0,d.b),0));
+  }
+  return {ok: !ds.some(d=>d.b>0.005), months:month, interest, order, track};
+}
+function focusDebt(strat){
+  const ds = S.debts.map(d=>({d,b:balOf(d),r:num(d.apr)})).filter(x=>x.b>0);
+  if(!ds.length) return null;
+  return ds.sort(prio(strat))[0].d;
+}
+
+const DAY = 86400000;
+function monthlyInt(d){ return balOf(d)*num(d.apr)/1200; }
+function compact(n){ return n>=1000 ? '$'+(n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'k' : '$'+Math.round(n); }
+function isoLocal(dt){ return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
+function dueInfo(d){
+  const day = parseInt(d.due,10); if(!day || day<1 || day>31) return null;
+  const t = new Date(); t.setHours(0,0,0,0);
+  const mk = (y,m) => { const last = new Date(y,m+1,0).getDate(); return new Date(y,m,Math.min(day,last)); };
+  let next = mk(t.getFullYear(), t.getMonth()); if(next < t) next = mk(t.getFullYear(), t.getMonth()+1);
+  const prev = mk(next.getFullYear(), next.getMonth()-1), prev2 = mk(next.getFullYear(), next.getMonth()-2);
+  const days = Math.round((next - t)/DAY);
+  const pays = S.payments.filter(p=>p.debtId===d.id && p.type!=='charge').map(p=>new Date(p.date+'T00:00:00'));
+  const marks = Array.isArray(d.paidMarks) ? d.paidMarks : [];
+  const markedNext = marks.includes(isoLocal(next)), markedPrev = marks.includes(isoLocal(prev));
+  const paidNext = markedNext || pays.some(x=>x>prev && x<=next);
+  const paidPrev = markedPrev || pays.some(x=>x>prev2 && x<=prev);
+  const created = d.created || 0;
+  const label = next.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  if(balOf(d)<=0) return null;
+  if(!paidPrev && !paidNext && created && created < prev2.getTime()) return {cls:'miss', text:`Missed ${prev.toLocaleDateString('en-US',{month:'short',day:'numeric'})} payment?`, days, next, target:prev, urgent:true};
+  if(paidNext) return {cls:'ok', text:`Paid for ${label}`, days, next, marked:markedNext, target:next};
+  if(days===0) return {cls:'soon', text:'Due today', days, next, target:next, urgent:true};
+  if(days<=7) return {cls:'soon', text:`Due in ${days} day${days>1?'s':''} · ${label}`, days, next, target:next, urgent:true};
+  return {cls:'', text:`Due ${label}`, days, next, target:next};
+}
+
+/* ---------- render ---------- */
+function render(){
+  const debts = S.debts;
+  const total = debts.reduce((s,d)=>s+balOf(d),0);
+  const start = debts.reduce((s,d)=>s+num(d.start)+charged(d),0);
+  const paid = Math.max(0, start-total);
+  const pct = start>0 ? Math.min(100, paid/start*100) : 0;
+  const plan = simulate(budget()+boostTotal(), S.strategy);
+  $('#hTotal').textContent = fmt2(total);
+  $('#hPaid').textContent = fmt2(paid);
+  $('#hPct').textContent = Math.round(pct)+'%';
+  $('#ringArc').style.strokeDashoffset = 314.16*(1-pct/100);
+  $('#hFree').textContent = !debts.length ? '—' : total<=0 ? 'Done!' : plan.ok ? monthLabel(plan.months) : 'Raise budget';
+  $('#hCards').textContent = debts.filter(d=>balOf(d)<=0).length + ' / ' + debts.length;
+  $('#hInt').textContent = fmt(debts.reduce((s,d)=>s+monthlyInt(d),0));
+
+  const f = focusDebt(S.strategy);
+  $('#grid').innerHTML = debts.map(d=>{
+    const b = balOf(d), st = num(d.start)+charged(d), p = st>0 ? Math.min(100,(st-b)/st*100) : 100;
+    const isPaid = b<=0;
+    return `<button class="tile ${isPaid?'isPaid':''}" data-id="${d.id}">
+      <div class="tint" style="background:${d.color}"></div>
+      <div class="top"><div class="name"><span class="dot" style="background:${d.color}"></span>${esc(d.name)}</div>
+      ${isPaid?'<span class="badge paid">'+I('check',12,3)+' PAID OFF</span>': f&&f.id===d.id?'<span class="badge">'+I('target',12,2.4)+' FOCUS</span>':''}</div>
+      <div class="bal" data-bal="${d.id}">${fmt2(b)}</div>
+      <div class="of">of ${fmt2(st)} · ${Math.round(p)}% paid</div>
+      <div class="bar"><i style="width:${p}%;background:${d.color}"></i></div>
+      <div class="meta"><span>${num(d.apr)?num(d.apr)+'% APR':'APR not set'}</span><span>Min ${fmt2(num(d.min))}</span>${!isPaid&&num(d.apr)?`<span>≈ ${fmt(monthlyInt(d))}/mo interest</span>`:''}</div>
+      ${(()=>{ const di = dueInfo(d); if(!di) return ''; const act = di.cls==='ok' ? (di.marked ? `<span class="dueAct" data-unmark="${d.id}" data-iso="${isoLocal(di.target)}">Undo</span>` : '') : `<span class="dueAct" data-made="${d.id}">${I('check',12,2.6)}Payment made</span>`; return `<div class="dueRow"><div class="due ${di.cls}">${I(di.cls==='ok'?'check':di.cls==='miss'?'stop':'calendar',13,2.2)}${di.text}</div>${act}</div>`; })()}
+    </button>`;
+  }).join('') + `<button class="tile addTile" id="addCard"><div><span>${I('plus',22,2.2)}</span>Add a card</div></button>`;
+
+  renderUpcoming(); renderChart(plan); renderInterest();
+  renderPlan(plan, f); renderIdeas(); renderTips(plan, f); renderHist();
+}
+
+function renderUpcoming(){
+  const el = $('#upcoming'); const active = S.debts.filter(d=>balOf(d)>0);
+  if(!active.length){ el.innerHTML=''; return; }
+  const withDue = active.map(d=>({d, di:dueInfo(d)})).filter(x=>x.di);
+  if(!withDue.length){ el.innerHTML = `<div class="upnote">${I('calendar',16)}Add due dates to your cards to see what's coming up.</div>`; return; }
+  const list = withDue.filter(x=>x.di.cls==='miss' || (x.di.cls!=='ok' && x.di.days<=14)).sort((a,b)=>(a.di.cls==='miss'?-1:0)-(b.di.cls==='miss'?-1:0) || a.di.days-b.di.days);
+  if(!list.length){ el.innerHTML = `<div class="upnote">${I('check',16)}You're all caught up for the next two weeks.</div>`; return; }
+  el.innerHTML = `<div class="upcoming">` + list.map(({d,di})=>`<button class="up ${di.cls}" data-pay="${d.id}"><div class="sq" style="background:${d.color}">${I(di.cls==='miss'?'stop':'calendar',17)}</div><div><b>${esc(d.name)} · ${fmt2(Math.min(num(d.min)||balOf(d),balOf(d)))}</b><span>${esc(di.text)}</span></div></button>`).join('') + `</div>`;
+  el.querySelectorAll('[data-pay]').forEach(b=>b.onclick=()=>openPayment(b.dataset.pay));
+}
+
+function renderInterest(){
+  const el = $('#interest'); const active = S.debts.filter(d=>balOf(d)>0);
+  const total = active.reduce((s,d)=>s+monthlyInt(d),0);
+  if(!active.length){ el.innerHTML = `<h3 style="font-size:17px;font-weight:700">Interest cost</h3><p class="note">${S.debts.length?'No balances left — no interest. Nice.':'Add cards with their APR to see what interest costs you.'}</p>`; return; }
+  const rows = active.map(d=>({d,v:monthlyInt(d)})).sort((a,b)=>b.v-a.v);
+  const max = Math.max(1, ...rows.map(r=>r.v));
+  el.innerHTML = `<h3 style="font-size:17px;font-weight:700">What interest costs you</h3>
+    <div style="display:flex;gap:18px;margin-top:10px;flex-wrap:wrap"><div><b style="font-size:26px;font-weight:800;font-variant-numeric:tabular-nums">${fmt2(round2(total))}</b><div class="note" style="margin:0">per month</div></div><div><b style="font-size:26px;font-weight:800;font-variant-numeric:tabular-nums">${fmt2(round2(total*12/365))}</b><div class="note" style="margin:0">per day</div></div><div><b style="font-size:26px;font-weight:800;font-variant-numeric:tabular-nums">${fmt(total*12)}</b><div class="note" style="margin:0">per year</div></div></div>
+    <div class="intRow">${rows.map(r=>`<div><span class="nm">${esc(r.d.name)}</span><span class="track"><i style="width:${r.v/max*100}%;background:${r.d.color}"></i></span><span class="v">${num(r.d.apr)?fmt2(round2(r.v))+'/mo':'no APR'}</span></div>`).join('')}</div>
+    <p class="note">This is money that doesn't lower your balance. Every extra dollar you pay shrinks it.</p>`;
+}
+
+function renderChart(plan){
+  const el = $('#chart');
+  if(!S.debts.length){ el.innerHTML = `<div class="empty">Your progress chart appears once you add a card.</div>`; return; }
+  const now = new Date(); now.setHours(12,0,0,0); const tNow = now.getTime();
+  const cur = S.debts.reduce((s,d)=>s+balOf(d),0);
+  const ev = [...S.payments].sort((a,b)=>String(a.date).localeCompare(String(b.date)) || (a.ts||0)-(b.ts||0));
+  let t0 = Math.min(...S.debts.map(d=>d.created||tNow));
+  if(ev.length){ const fd = new Date(ev[0].date+'T12:00:00').getTime(); if(!isNaN(fd) && fd<t0) t0 = fd; }
+  t0 = Math.min(t0, tNow);
+  let tot = S.debts.reduce((s,d)=>s+num(d.start),0);
+  const act = [[t0, tot]];
+  for(const p of ev){ const t = new Date(p.date+'T12:00:00').getTime(); tot += p.type==='charge'?num(p.amount):-num(p.amount); act.push([isNaN(t)?tNow:Math.min(t,tNow), Math.max(0,tot)]); }
+  act.push([tNow, cur]);
+  const proj = [[tNow, cur]];
+  if(plan.ok && plan.track) plan.track.forEach((v,i)=>proj.push([tNow+(i+1)*30.44*DAY, v]));
+  const tEnd = Math.max(proj[proj.length-1][0], tNow+30*DAY, t0+60*DAY);
+  const yMax = Math.max(1, ...act.map(p=>p[1]), ...proj.map(p=>p[1]))*1.1;
+  const W=360,H=190,L=40,Rr=10,T=12,B=26;
+  const x = t => L + (t-t0)/(tEnd-t0)*(W-L-Rr), y = v => T + (1-v/yMax)*(H-T-B);
+  const line = pts => pts.map((p,i)=>(i?'L':'M')+x(p[0]).toFixed(1)+' '+y(p[1]).toFixed(1)).join(' ');
+  const area = line(act) + ` L${x(tNow).toFixed(1)} ${y(0)} L${x(t0).toFixed(1)} ${y(0)} Z`;
+  const grid = [0,.5,1].map(f=>`<line x1="${L}" x2="${W-Rr}" y1="${y(yMax*f/1.1)}" y2="${y(yMax*f/1.1)}" stroke="#ECE9E2"/><text x="${L-6}" y="${y(yMax*f/1.1)+4}" text-anchor="end" font-size="10.5" fill="#8A8A94">${compact(yMax*f/1.1)}</text>`).join('');
+  const lbl = t => new Date(t).toLocaleDateString('en-US',{month:'short',year:'2-digit'});
+  const endLabel = plan.ok && plan.months>0 ? 'Debt-free ' + lbl(proj[proj.length-1][0]) : lbl(tEnd);
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Total debt over time">${grid}
+    <path d="${area}" fill="#16A36F" opacity=".1"/>
+    ${proj.length>1?`<path d="${line(proj)}" fill="none" stroke="#9A9AA6" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round"/>`:''}
+    <path d="${line(act)}" fill="none" stroke="#16A36F" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+    <line x1="${x(tNow)}" x2="${x(tNow)}" y1="${T}" y2="${H-B}" stroke="#17171C" stroke-dasharray="2 3" opacity=".35"/>
+    <circle cx="${x(tNow)}" cy="${y(cur)}" r="5" fill="#fff" stroke="#16A36F" stroke-width="2.6"/>
+    <text x="${x(t0)}" y="${H-8}" font-size="10.5" fill="#8A8A94">${lbl(t0)}</text>
+    <text x="${x(tNow)}" y="${H-8}" font-size="10.5" fill="#17171C" font-weight="600" text-anchor="${x(tNow)>W-80?'end':x(tNow)<L+50?'start':'middle'}">Today</text>
+    ${x(tEnd)-x(tNow)>90?`<text x="${W-Rr}" y="${H-8}" font-size="10.5" fill="#8A8A94" text-anchor="end">${endLabel}</text>`:''}
+  </svg>`;
+  const start = act[0][1];
+  $('#chartSub').textContent = start>cur ? `Down ${fmt2(round2(start-cur))} since you started` : 'Total debt over time';
+}
+
+function renderPlan(plan, f){
+  const el = $('#plan');
+  if(!S.debts.length){ el.innerHTML = `<h3 style="font-size:17px;font-weight:700">Add your first card</h3><p class="note">Once you add cards with their balance, APR and minimum payment, your plan appears here.</p><button class="btn dark" style="margin-top:14px" onclick="openCard()">${I('plus',16,2.4)} Add a card</button>`; return; }
+  const ms = minSum(), bud = budget(), boost = boostTotal(), monthly = bud+boost;
+  const minOnly = simulate(ms, S.strategy, false);
+  const alt = simulate(monthly, S.strategy==='avalanche'?'snowball':'avalanche');
+  let html = `<div class="seg"><button data-s="avalanche" class="${S.strategy==='avalanche'?'on':''}">${I('bolt',15)} Avalanche</button><button data-s="snowball" class="${S.strategy==='snowball'?'on':''}">${I('snow',15)} Snowball</button></div>
+  <p class="note">${S.strategy==='avalanche'?'Highest interest rate first — saves the most money.':'Smallest balance first — fastest wins to keep you motivated.'}</p>
+  <div class="field"><label>What can you put toward debt each month (total)?</label><div class="money"><input class="inp" id="budget" inputmode="decimal" value="${S.budget==null?'':S.budget}" placeholder="${ms.toFixed(0)} (your minimums)"></div></div>`;
+  if(f){
+    const extra = Math.max(0, monthly-ms);
+    html += `<div class="focus" style="background:linear-gradient(135deg,${f.color},${shade(f.color,-35)})"><small>Focus on this one first</small><h3>${esc(f.name)}</h3>
+    <p>Pay the minimum on everything else and send ${extra>0?'<b>'+fmt2(round2(Math.min(balOf(f), extra + Math.min(num(f.min),balOf(f)))))+'</b>':'every extra dollar'} to ${esc(f.name)} this month${S.strategy==='avalanche'?' — it has the highest rate'+(num(f.apr)?' ('+num(f.apr)+'%)':''):' — it\'s your smallest balance'}.</p></div>`;
+  }
+  if(bud < ms - 0.5) html += `<div class="warnbox">Your budget is below your minimum payments (${fmt2(ms)}). Missing minimums triggers fees and credit damage — aim for at least ${fmt2(ms)}.</div>`;
+  if(plan.ok && plan.months>0){
+    html += `<div class="kpis"><div class="kpi"><b>${monthLabel(plan.months)}</b><span>debt-free</span></div><div class="kpi"><b>${plan.months} mo</b><span>to go</span></div><div class="kpi"><b>${fmt(plan.interest)}</b><span>interest left</span></div></div>`;
+    if(minOnly.ok && minOnly.interest - plan.interest > 1) html += `<div class="goodbox">${I('down',18)}<span>Versus paying only minimums, this plan saves <b>${fmt(minOnly.interest-plan.interest)}</b> in interest and gets you out <b>${minOnly.months-plan.months} months</b> sooner.</span></div>`;
+    else if(!minOnly.ok) html += `<div class="goodbox">${I('down',18)}<span>Paying only minimums would take 50+ years — this plan gets you out in ${plan.months} months.</span></div>`;
+    if(alt.ok && S.strategy==='snowball' && alt.interest < plan.interest - 20) html += `<p class="note">Avalanche would save ${fmt(plan.interest-alt.interest)} more — but Snowball is great if quick wins keep you going.</p>`;
+    html += `<div class="order"><div style="font-weight:600;font-size:13px;color:var(--muted)">PAYOFF ORDER</div>` + plan.order.map((o,i)=>`<div><span class="n" style="background:${o.color}">${i+1}</span>${esc(o.name)}<span class="when">${monthLabel(o.month)}</span></div>`).join('') + `</div>`;
+  } else if(!plan.ok){
+    html += `<div class="warnbox">At this amount the balance grows faster than you pay it. Add APRs and minimums for each card, or raise your monthly amount.</div>`;
+  }
+  if(S.debts.some(d=>!num(d.apr))) html += `<p class="note">Tip: add the APR for every card so the plan ranks them accurately.</p>`;
+  el.innerHTML = html;
+  el.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ S.strategy=b.dataset.s; commit(); });
+  const bi = $('#budget');
+  bi.onchange = () => { S.budget = bi.value.trim()==='' ? null : Math.max(0,num(bi.value)); commit(); };
+}
+
+function renderIdeas(){
+  const el = $('#ideas');
+  if(!el.dataset.built){
+    el.innerHTML = IDEAS.map(i=>`<div class="idea"><div class="ic">${I(i.ic,18)}</div><div class="tx"><b>${i.t}</b><span>${i.s}</span></div><div class="money"><input class="inp" inputmode="decimal" data-boost="${i.k}" placeholder="0"></div></div>`).join('');
+    el.dataset.built = 1;
+    el.querySelectorAll('[data-boost]').forEach(inp=>{
+      inp.onchange = () => { const v = Math.max(0,num(inp.value)); if(v) S.boosts[inp.dataset.boost]=v; else delete S.boosts[inp.dataset.boost]; commit(); };
+    });
+  }
+  el.querySelectorAll('[data-boost]').forEach(inp=>{ if(document.activeElement!==inp) inp.value = S.boosts[inp.dataset.boost] || ''; });
+  const boost = boostTotal(), out = $('#boostOut');
+  if(!S.debts.length || boost<=0){ out.innerHTML = `<p class="note">Found money gets added to your plan automatically.</p>`; return; }
+  const base = simulate(budget(), S.strategy), withB = simulate(budget()+boost, S.strategy);
+  let msg = `<b>${fmt2(boost)}/mo</b> found`;
+  if(base.ok && withB.ok) msg += ` gets you debt-free <b>${Math.max(0,base.months-withB.months)} months sooner</b> and <b>${fmt(Math.max(0,base.interest-withB.interest))}</b> less interest.`;
+  else if(!base.ok && withB.ok) msg += ` — this is what makes your plan work: debt-free by <b>${monthLabel(withB.months)}</b>.`;
+  out.innerHTML = `<div class="goodbox">${I('sparkle',18)}<span>${msg}</span></div><p class="note">Move this money the day you get paid, before it gets spent.</p>`;
+}
+
+function renderTips(plan, f){
+  const tips = [];
+  const active = S.debts.filter(d=>balOf(d)>0);
+  if(!S.debts.length){ tips.push(['wave','Start with your cards','Add each card with its balance, APR and minimum. The more accurate, the smarter your plan.']); }
+  const intTot = active.reduce((s,d)=>s+monthlyInt(d),0);
+  if(intTot>=5 && f) tips.push(['down',`Interest is costing ${fmt(intTot)}/month`,`That's about ${fmt2(round2(intTot*12/365))} a day. ${esc(f.name)} alone costs ${fmt(monthlyInt(f))}/mo — paying it down first shrinks this fastest.`]);
+  const hi = active.filter(d=>num(d.apr)>=20).sort((a,b)=>num(b.apr)-num(a.apr))[0];
+  if(hi){ const save = balOf(hi)*0.05; tips.push(['call',`Call ${hi.name} for a lower rate`,`At ${num(hi.apr)}% APR, a 5-point cut saves about ${fmt(save)}/year. Ask: "I've been a loyal customer — can you lower my APR?" It works more than you'd think.`]); }
+  const bt = active.filter(d=>num(d.apr)>=18 && balOf(d)>=1500).sort((a,b)=>balOf(b)*num(b.apr)-balOf(a)*num(a.apr))[0];
+  if(bt) tips.push(['transfer','Consider a 0% balance transfer',`Moving ${bt.name} (${fmt(balOf(bt))}) to a 0% intro card could pause about ${fmt(balOf(bt)*num(bt.apr)/1200)}/mo in interest. Watch the 3–5% fee and pay it off before the promo ends.`]);
+  if(f && budget()>minSum()+1) tips.push(['target','Your extra is working',`Every dollar above minimums goes to ${f.name}. When it's gone, its payment rolls to the next card automatically — your payments snowball without spending more.`]);
+  if(f && budget()<=minSum()+1 && active.length){ const a=simulate(minSum(),S.strategy), b=simulate(minSum()+50,S.strategy); if(a.ok&&b.ok&&a.months>b.months) tips.push(['plus','Just $50 more matters',`Adding $50/month would get you out ${a.months-b.months} months sooner and save ${fmt(a.interest-b.interest)}. Check "Find extra money" for painless places to get it.`]); }
+  const monthStart = today().slice(0,7);
+  const newCharges = S.payments.filter(p=>p.type==='charge' && String(p.date).slice(0,7)===monthStart).reduce((s,p)=>s+num(p.amount),0);
+  if(newCharges>0) tips.push(['stop',`${fmt2(newCharges)} in new charges this month`,'New spending on cards you\'re paying down undoes progress. Try a debit card or cash envelope for daily buys until these are gone.']);
+  if(active.length) tips.push(['calendar','Pay half every two weeks','Splitting your payment and paying every 2 weeks = 13 full payments a year instead of 12, and less interest builds up between payments.']);
+  if(active.length) tips.push(['card','Freeze the cards, not the accounts','Remove saved cards from shopping apps so buying takes effort. Keep the accounts open once paid off — it helps your credit score.']);
+  if(active.length) tips.push(['gift','Plan windfalls now','Decide today that tax refunds, bonuses or gifts go 50%+ to your focus card. It\'s money you weren\'t budgeting for anyway.']);
+  if(S.debts.length && !active.length) tips.unshift(['trophy','You\'re debt-free!','Now point that same monthly amount at savings — an emergency fund keeps you from needing cards again.']);
+  $('#tips').innerHTML = tips.slice(0,6).map(t=>`<div class="tip ${t[0]==='target'||t[0]==='trophy'?'hl':''}"><div class="ic">${I(t[0],19)}</div><div><b>${esc(t[1])}</b><p>${esc(t[2])}</p></div></div>`).join('');
+}
+
+function renderHist(){
+  const list = [...S.payments].sort((a,b)=> String(b.date).localeCompare(String(a.date)) || (b.ts||0)-(a.ts||0));
+  const totalPaid = S.payments.filter(p=>p.type!=='charge').reduce((s,p)=>s+num(p.amount),0);
+  $('#histSub').textContent = list.length ? `${S.payments.filter(p=>p.type!=='charge').length} payments · ${fmt2(totalPaid)} total` : 'Every payment you log';
+  if(!list.length){ $('#hist').innerHTML = `<div class="empty">No payments yet. Tap <b>Log payment</b> to drop your first one.</div>`; return; }
+  const byId = Object.fromEntries(S.debts.map(d=>[d.id,d]));
+  $('#hist').innerHTML = list.slice(0,60).map(p=>{ const d = byId[p.debtId]||{name:'Deleted card',color:'#ccc'}; const chg = p.type==='charge';
+    const dt = new Date(p.date+'T12:00:00');
+    return `<div class="hrow"><span class="dot" style="background:${d.color}"></span><div class="w"><b>${esc(d.name)}</b><span>${isNaN(dt)?esc(p.date):dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}${chg?' · new charge / interest':''}${p.note?' · '+esc(p.note):''}</span></div><div class="amt ${chg?'chg':'pay'}">${chg?'+':'−'}${fmt2(num(p.amount))}</div><button class="x" data-del="${p.id}" title="Delete">×</button></div>`;
+  }).join('');
+  $('#hist').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>confirmBox('Delete this entry?','The card balance will be recalculated.','Delete',()=>{ S.payments=S.payments.filter(p=>p.id!==b.dataset.del); commit(); }));
+}
+
+function shade(hex, pct){ const n=parseInt(hex.slice(1),16); let r=n>>16,g=n>>8&255,b=n&255; const f=pct/100; r=Math.round(Math.min(255,Math.max(0,r+r*f))); g=Math.round(Math.min(255,Math.max(0,g+g*f))); b=Math.round(Math.min(255,Math.max(0,b+b*f))); return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1); }
+
+/* ---------- sheets ---------- */
+function openSheet(html){ $('#sheet').innerHTML = html; $('#scrim').classList.add('open'); }
+function closeSheet(){ $('#scrim').classList.remove('open'); }
+$('#scrim').addEventListener('click', e=>{ if(e.target.id==='scrim') closeSheet(); });
+
+function confirmBox(title, sub, okLabel, onOk){
+  openSheet(`<h3>${esc(title)}</h3><p class="sub">${esc(sub)}</p><div class="acts"><button class="btn" id="cNo">Cancel</button><button class="btn dark" id="cYes" style="background:#D23B3B;border-color:#D23B3B">${esc(okLabel)}</button></div>`);
+  $('#cNo').onclick = closeSheet; $('#cYes').onclick = ()=>{ closeSheet(); onOk(); };
+}
+
+function openCard(id){
+  const d = S.debts.find(x=>x.id===id) || { id:null, name:'', color:COLORS[S.debts.length % COLORS.length], start:'', apr:'', min:'', due:'' };
+  let color = d.color;
+  openSheet(`<h3>${d.id?'Edit card':'Add a card'}</h3><p class="sub">${d.id?'Changes recalculate your plan instantly.':'Use the balance you owe today.'}</p>
+    <div class="field"><label>Card name</label><input class="inp" id="cName" value="${esc(d.name)}" placeholder="e.g. Chase Freedom" maxlength="30"></div>
+    <div class="field"><label>Color</label><div class="swatches">${COLORS.map(c=>`<button class="sw ${c===color?'on':''}" data-c="${c}" style="background:${c}"></button>`).join('')}</div></div>
+    <div class="field"><label>${d.id?'Starting balance (when you began tracking)':'Current balance'}</label><div class="money"><input class="inp" id="cStart" inputmode="decimal" value="${d.start}" placeholder="2,500"></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field"><label>APR (interest %)</label><input class="inp" id="cApr" inputmode="decimal" value="${d.apr}" placeholder="24.99"></div>
+      <div class="field"><label>Minimum payment</label><div class="money"><input class="inp" id="cMin" inputmode="decimal" value="${d.min}" placeholder="75"></div></div>
+    </div>
+    <div class="field"><label>Payment due day (day of the month)</label><input class="inp" id="cDue" inputmode="numeric" value="${d.due||''}" placeholder="15"></div>
+    <p class="note">APR, minimum and due date are on your statement. They power your plan, reminders and tips.</p>
+    <div class="acts">${d.id?'<button class="btn danger" id="cDel">Delete</button>':'<button class="btn" id="cCancel">Cancel</button>'}<button class="btn dark" id="cSave">${d.id?'Save':'Add card'}</button></div>`);
+  $('#sheet').querySelectorAll('.sw').forEach(b=>b.onclick=()=>{ color=b.dataset.c; $('#sheet').querySelectorAll('.sw').forEach(x=>x.classList.toggle('on',x===b)); });
+  if($('#cCancel')) $('#cCancel').onclick = closeSheet;
+  if($('#cDel')) $('#cDel').onclick = ()=>confirmBox(`Delete ${d.name}?`,'This removes the card and its payment history.','Delete',()=>{ S.debts=S.debts.filter(x=>x.id!==d.id); S.payments=S.payments.filter(p=>p.debtId!==d.id); commit(); });
+  $('#cSave').onclick = ()=>{
+    const name = $('#cName').value.trim(), start = num($('#cStart').value);
+    if(!name){ $('#cName').focus(); toast('Give the card a name'); return; }
+    if(start<=0){ $('#cStart').focus(); toast('Enter the balance you owe'); return; }
+    const rec = { id:d.id||uid(), name, color, start:round2(start), apr:round2(Math.max(0,num($('#cApr').value))), min:round2(Math.max(0,num($('#cMin').value))), due:(()=>{ const v=parseInt($('#cDue').value,10); return v>=1&&v<=31?v:''; })(), created:d.created||Date.now() };
+    if(d.id) S.debts = S.debts.map(x=>x.id===d.id?rec:x); else S.debts.push(rec);
+    closeSheet(); commit(); toast(d.id?'Card updated':'Card added — let\'s knock it out');
+  };
+  if(!d.id) setTimeout(()=>$('#cName').focus(),250);
+}
+
+function openPayment(preId){
+  const active = S.debts.filter(d=>balOf(d)>0);
+  if(!S.debts.length){ openCard(); toast('Add a card first'); return; }
+  if(!active.length){ toast('Everything is paid off!'); return; }
+  const f = focusDebt(S.strategy);
+  let sel = (preId && active.find(d=>d.id===preId)) ? preId : (f?f.id:active[0].id);
+  let type = 'payment';
+  const draw = () => {
+    const d = S.debts.find(x=>x.id===sel), b = balOf(d);
+    $('#pBal').innerHTML = `${esc(d.name)} balance: <b>${fmt2(b)}</b>`;
+    $('#pQuick').innerHTML = type==='payment' ? [num(d.min)&&['Minimum',num(d.min)],[ 'Pay in full', b ]].filter(Boolean).map(q=>`<button data-q="${q[1]}">${q[0]} · ${fmt2(q[1])}</button>`).join('') : '';
+    $('#pQuick').querySelectorAll('[data-q]').forEach(x=>x.onclick=()=>{$('#pAmt').value=x.dataset.q;});
+  };
+  openSheet(`<h3>Log a payment</h3><p class="sub">Watch it drop.</p>
+    <div class="field"><label>Which card?</label><div class="chips" id="pChips">${active.map(d=>`<button class="chip ${d.id===sel?'on':''}" data-id="${d.id}"><i style="background:${d.color}"></i>${esc(d.name)}</button>`).join('')}</div></div>
+    <div class="field"><div class="seg" id="pType"><button data-t="payment" class="on">Payment</button><button data-t="charge">New charge / interest</button></div></div>
+    <div class="field"><label>Amount</label><div class="money"><input class="inp" id="pAmt" inputmode="decimal" placeholder="0.00" style="font-size:22px;font-weight:700"></div><div class="quick" id="pQuick"></div><p class="note" id="pBal" style="margin-top:4px"></p></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="field"><label>Date</label><input class="inp" id="pDate" type="date" value="${today()}"></div><div class="field"><label>Note (optional)</label><input class="inp" id="pNote" maxlength="40" placeholder="Paycheck"></div></div>
+    <div class="acts"><button class="btn" id="pCancel">Cancel</button><button class="btn good" id="pSave">${I('arrowDown',17,2.4)} Drop it</button></div>`);
+  draw();
+  $('#pChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{ sel=c.dataset.id; $('#pChips').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===c)); draw(); });
+  $('#pType').querySelectorAll('button').forEach(b=>b.onclick=()=>{ type=b.dataset.t; $('#pType').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); $('#pSave').innerHTML = type==='payment'?I('arrowDown',17,2.4)+' Drop it':I('plus',17,2.4)+' Add charge'; $('#pSave').className = 'btn '+(type==='payment'?'good':'dark'); draw(); });
+  $('#pCancel').onclick = closeSheet;
+  $('#pSave').onclick = ()=>{
+    let amt = round2(num($('#pAmt').value));
+    if(amt<=0){ $('#pAmt').focus(); toast('Enter an amount'); return; }
+    const d = S.debts.find(x=>x.id===sel), before = balOf(d);
+    if(type==='payment' && amt > before){ amt = before; toast(`Capped at the ${fmt2(before)} balance`); }
+    S.payments.push({ id:uid(), debtId:sel, amount:amt, type, date:$('#pDate').value||today(), note:$('#pNote').value.trim(), ts:Date.now() });
+    closeSheet();
+    if(type==='payment') dropAnimation(d, amt, before);
+    else { commit(); toast(`Added ${fmt2(amt)} to ${d.name}`); }
+  };
+  setTimeout(()=>$('#pAmt').focus(),250);
+}
+
+function openPaid(id){
+  const d = S.debts.find(x=>x.id===id); if(!d) return;
+  const di = dueInfo(d); if(!di || !di.target) return;
+  const iso = isoLocal(di.target), when = di.target.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  const b = balOf(d), suggest = Math.min(num(d.min)||b, b);
+  openSheet(`<h3>Payment made for ${esc(d.name)}?</h3><p class="sub">This marks the ${when} due date as paid, so you won't get reminders for it.</p>
+    <div class="field"><label>Amount you paid</label><div class="money"><input class="inp" id="mAmt" inputmode="decimal" value="${suggest||''}" style="font-size:22px;font-weight:700"></div><p class="note" style="margin-top:4px">Logging the amount lowers your balance too. Balance: <b>${fmt2(b)}</b></p></div>
+    <div class="acts"><button class="btn" id="mOnly">Just mark paid</button><button class="btn good" id="mLog">${I('arrowDown',17,2.4)} Log and mark</button></div>`);
+  const mark = () => { d.paidMarks = [...new Set([...(d.paidMarks||[]), iso])].slice(-24); };
+  $('#mOnly').onclick = () => { mark(); closeSheet(); commit(); toast(`${d.name} marked paid for ${when}`); };
+  $('#mLog').onclick = () => {
+    let amt = round2(num($('#mAmt').value)); if(amt<=0){ $('#mAmt').focus(); toast('Enter an amount, or tap Just mark paid'); return; }
+    const before = balOf(d); if(amt>before) amt = before;
+    mark();
+    S.payments.push({ id:uid(), debtId:d.id, amount:amt, type:'payment', date:today(), note:`For ${when} due date`, ts:Date.now() });
+    closeSheet(); dropAnimation(d, amt, before);
+  };
+}
+
+/* ---------- animations ---------- */
+function dropAnimation(d, amt, before){
+  const tile = document.querySelector(`.tile[data-id="${d.id}"]`);
+  if(!tile){ commit(); return; }
+  tile.scrollIntoView({behavior:'smooth', block:'center'});
+  setTimeout(()=>{
+    const r = tile.getBoundingClientRect();
+    const coin = document.createElement('div');
+    coin.className='coin'; coin.style.background=d.color; coin.textContent='−'+fmt2(amt);
+    document.body.appendChild(coin);
+    const cw = coin.offsetWidth, x = r.left + r.width/2 - cw/2, endY = r.top + 52;
+    coin.animate([
+      {transform:`translate(${x}px,-60px) scale(.7) rotate(-8deg)`,opacity:0},
+      {transform:`translate(${x}px,${endY-40}px) scale(1.05) rotate(3deg)`,opacity:1,offset:.7},
+      {transform:`translate(${x}px,${endY}px) scale(.4)`,opacity:0}
+    ],{duration:900,easing:'cubic-bezier(.5,0,.75,0)',fill:'forwards'}).onfinish=()=>{
+      coin.remove();
+      const rp = document.createElement('div'); rp.className='ripple'; rp.style.background=d.color; rp.style.left='50%'; rp.style.top='70px';
+      tile.appendChild(rp); setTimeout(()=>rp.remove(),900);
+      tile.classList.add('shake'); setTimeout(()=>tile.classList.remove('shake'),500);
+      const after = Math.max(0, round2(before-amt));
+      const balEl = tile.querySelector('.bal'), t0 = performance.now();
+      const tick = now => { const k = Math.min(1,(now-t0)/900), e = 1-Math.pow(1-k,3); balEl.textContent = fmt2(round2(before-(before-after)*e)); if(k<1) requestAnimationFrame(tick); else finish(); };
+      requestAnimationFrame(tick);
+      function finish(){
+        commit();
+        if(after<=0){ setTimeout(()=>celebrate(d),250); }
+        else toast(cheer(amt, after, d));
+      }
+    };
+  }, 380);
+}
+function cheer(amt, after, d){ const l=['Nice drop!','Boom. Progress.','Another one down.','You\'re doing it.','Future you says thanks.']; return `${l[Math.floor(Math.random()*l.length)]} ${d.name}: ${fmt2(after)} left`; }
+
+function celebrate(d){
+  confetti([d.color,'#FFD166','#3DDC97','#4B5BFF','#FF5FA2']);
+  const left = S.debts.filter(x=>balOf(x)>0);
+  const next = focusDebt(S.strategy);
+  const allDone = !left.length;
+  openSheet(`<div class="celebrate"><div class="em" style="background:${allDone?'linear-gradient(145deg,#4B5BFF,#16A36F)':d.color}">${I(allDone?'trophy':'checkCircle',42,2)}</div><h3 style="font-size:26px;margin-top:16px">${allDone?'You\'re DEBT-FREE!':esc(d.name)+' is paid off!'}</h3>
+  <p class="sub" style="margin-top:6px;font-size:15px">${allDone?'Every single card — gone. That took real discipline. Seriously, be proud.':`That's ${S.debts.filter(x=>balOf(x)<=0).length} of ${S.debts.length} cards done. ${next?`Now roll its ${fmt2(num(d.min))} minimum into <b>${esc(next.name)}</b> — same money, faster payoff.`:''}`}</p>
+  <div class="acts"><button class="btn good" id="yay">${allDone?I('sparkle',17)+' Celebrate':'Keep going '+I('arrowRight',17,2.4)}</button></div></div>`);
+  $('#yay').onclick = ()=>{ closeSheet(); if(allDone) confetti(COLORS); };
+}
+
+function confetti(colors){
+  const cv = $('#confetti'), ctx = cv.getContext('2d'), dpr = window.devicePixelRatio||1;
+  cv.width = innerWidth*dpr; cv.height = innerHeight*dpr; ctx.scale(dpr,dpr);
+  const P = Array.from({length:180},()=>({x:innerWidth/2+(Math.random()-.5)*120,y:innerHeight*.35,vx:(Math.random()-.5)*16,vy:-Math.random()*16-4,s:Math.random()*8+5,c:colors[Math.floor(Math.random()*colors.length)],r:Math.random()*6,vr:(Math.random()-.5)*.3,sh:Math.random()<.5}));
+  let t=0;
+  (function frame(){
+    ctx.clearRect(0,0,innerWidth,innerHeight); t++;
+    for(const p of P){ p.vy+=.38; p.vx*=.99; p.x+=p.vx; p.y+=p.vy; p.r+=p.vr; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r); ctx.fillStyle=p.c; ctx.globalAlpha=Math.max(0,1-t/170); if(p.sh) ctx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2); else {ctx.beginPath(); ctx.arc(0,0,p.s/2.6,0,7); ctx.fill();} ctx.restore(); }
+    if(t<170) requestAnimationFrame(frame); else ctx.clearRect(0,0,innerWidth,innerHeight);
+  })();
+}
+
+/* ---------- backup ---------- */
+function openBackup(){
+  openSheet(`<h3>Back up / restore</h3><p class="sub">${mode==='cloud'?'Your tracker syncs to your account across devices. ':''}Copy this code somewhere safe as an extra backup, or paste one to restore.</p>
+  <div class="field"><textarea class="inp" id="bk">${esc(JSON.stringify(S))}</textarea></div>
+  <div class="acts"><button class="btn" id="bkCopy">Copy</button><button class="btn dark" id="bkLoad">Restore pasted</button></div>`);
+  $('#bkCopy').onclick = async ()=>{ try{ await navigator.clipboard.writeText($('#bk').value); toast('Copied'); }catch(e){ $('#bk').select(); toast('Select all and copy manually'); } };
+  $('#bkLoad').onclick = ()=>{ try{ const d = normalize(JSON.parse($('#bk').value)); if(!Array.isArray(d.debts)) throw 0; S = d; closeSheet(); commit(); toast('Restored'); }catch(e){ toast('That code doesn\'t look right'); } };
+}
+
+/* ---------- wiring ---------- */
+document.addEventListener('click', e=>{
+  const mk = e.target.closest('[data-made]'); if(mk){ e.stopPropagation(); openPaid(mk.dataset.made); return; }
+  const um = e.target.closest('[data-unmark]'); if(um){ e.stopPropagation(); const d = S.debts.find(x=>x.id===um.dataset.unmark); if(d){ d.paidMarks = (d.paidMarks||[]).filter(x=>x!==um.dataset.iso); commit(); toast('Unmarked. Reminders are back on for that date.'); } return; }
+  const t = e.target.closest('.tile');
+  if(!t) return;
+  if(t.id==='addCard') openCard(); else openCard(t.dataset.id);
+});
+$('#fab').onclick = ()=>openPayment();
+$('#backupBtn').onclick = openBackup;
+$('#acctBtn').onclick = openNotify;
+$('#sync').onclick = openNotify;
+window.openCard = openCard;
+$('#resetBtn').onclick = ()=>confirmBox('Start over?','This erases all cards and payments on every device.','Erase everything',()=>{ S = blank(); commit(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeSheet(); });
+
+initStore();
+</script>
+</body>
+</html>
