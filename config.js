@@ -6,12 +6,12 @@
 
 self.DEBT_DROP_CONFIG = {
   firebase: {
-    apiKey: "PASTE_API_KEY",
-    authDomain: "PASTE_AUTH_DOMAIN",
-    projectId: "PASTE_PROJECT_ID",
-    storageBucket: "PASTE_STORAGE_BUCKET",
-    messagingSenderId: "PASTE_SENDER_ID",
-    appId: "PASTE_APP_ID"
+    apiKey: "AIzaSyBUN9VSHvZDRSljvwHMQWS2qmEAAwkv1lI",
+    authDomain: "debt-drop-945cd.firebaseapp.com",
+    projectId: "debt-drop-945cd",
+    storageBucket: "debt-drop-945cd.firebasestorage.app",
+    messagingSenderId: "285030083897",
+    appId: "1:285030083897:web:0e805deb6e34a79d078ce8"
   },
-  vapidKey: "PASTE_VAPID_KEY"
+  vapidKey: "BDlbxVRpmbHFg_BPHCcnstvkiRwehLpueXma9yDrRrQnsWag4qlnQ6Ze6KiWxP6_gjODkpWAgTPGdrSXWqi-yU4"
 };
