@@ -76,6 +76,8 @@ section{margin-top:26px}
 .tile.isPaid .bal{color:var(--good)}
 .tile.shake{animation:shake .5s}
 @keyframes shake{0%,100%{transform:none}25%{transform:translateY(4px) scale(.99)}50%{transform:translateY(-2px)}75%{transform:translateY(1px)}}
+.paidHead{grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-top:10px;color:var(--good)}.paidHead b{font-size:16px;color:var(--ink)}.paidHead span{font-size:13px;color:var(--muted)}
+.tile.isPaid{opacity:.85}
 .addTile{border:2px dashed #D6D2C8;background:transparent;box-shadow:none;display:grid;place-items:center;min-height:170px;color:var(--muted);font-weight:600}
 .addTile span{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:var(--surface);margin:0 auto 8px;border:1px solid var(--line);color:var(--ink)}
 
@@ -596,7 +598,8 @@ function render(){
   $('#hInt').textContent = fmt(debts.reduce((s,d)=>s+monthlyInt(d),0));
 
   const f = focusDebt(S.strategy);
-  $('#grid').innerHTML = debts.map(d=>{
+  const active = debts.filter(d=>balOf(d)>0), paidOff = debts.filter(d=>balOf(d)<=0);
+  const tileHTML = d=>{
     const b = balOf(d), st = num(d.start)+charged(d), p = st>0 ? Math.min(100,(st-b)/st*100) : 100;
     const isPaid = b<=0;
     return `<button class="tile ${isPaid?'isPaid':''}" data-id="${d.id}">
@@ -609,7 +612,9 @@ function render(){
       <div class="meta"><span>${num(d.apr)?num(d.apr)+'% APR':'APR not set'}</span><span>Min ${fmt2(num(d.min))}</span>${!isPaid&&num(d.apr)?`<span>≈ ${fmt(monthlyInt(d))}/mo interest</span>`:''}</div>
       ${(()=>{ const di = dueInfo(d); if(!di) return ''; const act = di.cls==='ok' ? (di.marked ? `<span class="dueAct" data-unmark="${d.id}" data-iso="${isoLocal(di.target)}">Undo</span>` : '') : `<span class="dueAct" data-made="${d.id}">${I('check',12,2.6)}Payment made</span>`; return `<div class="dueRow"><div class="due ${di.cls}">${I(di.cls==='ok'?'check':di.cls==='miss'?'stop':'calendar',13,2.2)}${di.text}</div>${act}</div>`; })()}
     </button>`;
-  }).join('') + `<button class="tile addTile" id="addCard"><div><span>${I('plus',22,2.2)}</span>Add a card</div></button>`;
+  };
+  $('#grid').innerHTML = active.map(tileHTML).join('') + `<button class="tile addTile" id="addCard"><div><span>${I('plus',22,2.2)}</span>Add a card</div></button>`
+    + (paidOff.length ? `<div class="paidHead">${I('checkCircle',18)}<b>Paid off</b><span>${paidOff.length} card${paidOff.length>1?'s':''} · ${fmt2(paidOff.reduce((s,d)=>s+num(d.start)+charged(d),0))} cleared</span></div>` + paidOff.map(tileHTML).join('') : '');
 
   renderUpcoming(); renderChart(plan); renderInterest();
   renderPlan(plan, f); renderIdeas(); renderTips(plan, f); renderHist();
