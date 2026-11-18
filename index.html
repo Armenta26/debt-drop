@@ -76,6 +76,32 @@ section{margin-top:26px}
 .tile.isPaid .bal{color:var(--good)}
 .tile.shake{animation:shake .5s}
 @keyframes shake{0%,100%{transform:none}25%{transform:translateY(4px) scale(.99)}50%{transform:translateY(-2px)}75%{transform:translateY(1px)}}
+.dmpSetup{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);border:1.5px dashed #D6D2C8;border-radius:18px;padding:14px 16px;margin-bottom:14px;color:var(--muted)}
+.dmpSetup .sq{width:38px;height:38px;border-radius:12px;background:var(--soft);border:1px solid var(--line);display:grid;place-items:center;color:var(--ink);flex:none}
+.dmpSetup span{flex:1}.dmpSetup b{display:block;color:var(--ink);font-size:15px}.dmpSetup small{font-size:12.5px}
+.dmp{background:var(--surface);border-radius:var(--r);padding:20px;box-shadow:var(--shadow);margin-bottom:14px;border:1.5px solid var(--ink)}
+.dmpTop{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.dmpTop small{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.dmpTop h3{font-size:20px;font-weight:800;margin:1px 0 2px}.dmpTop p{font-size:13.5px;color:var(--muted)}
+.dmpBal{margin-top:14px}.dmpBal b{font-size:30px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;display:block;line-height:1.1}.dmpBal span{font-size:13px;color:var(--muted)}
+.dmpBar{display:flex}.dmpBar i{border-radius:0}.dmpBar i:first-child{border-radius:99px 0 0 99px}
+.dmpCards{display:flex;flex-wrap:wrap;gap:8px}
+.dmpCards span{display:inline-flex;align-items:center;gap:7px;font-size:13px;padding:6px 10px;border-radius:10px;background:var(--soft);border:1px solid var(--line)}
+.dmpCards span i{width:10px;height:10px;border-radius:3px}.dmpCards span b{font-variant-numeric:tabular-nums}
+.dmpCards span.done{color:var(--good)}
+.badge.plan{background:#EDEAFF;color:#3F2FB8}
+.due.plan{background:#EDEAFF;color:#3F2FB8;border-color:#D9D3FF}
+.dmpPick{display:flex;flex-direction:column;gap:8px}
+.pk{border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--soft)}
+.pk.on{border-color:var(--ink);background:#fff}
+.pkTop{display:flex;align-items:center;gap:10px;cursor:pointer}.pkTop input{display:none}
+.pkTop .box{width:22px;height:22px;border-radius:7px;border:2px solid #CFCBC1;display:grid;place-items:center;color:transparent;flex:none}
+.pk.on .box{background:var(--ink);border-color:var(--ink);color:#fff}
+.pkTop .dot{width:10px;height:10px;border-radius:3px}.pkTop b{flex:1;font-size:14.5px}.pkBal{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pkIn{display:none;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.pk.on .pkIn{display:grid}
+.pkIn label{font-size:11.5px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px}.pkIn .inp{padding:9px 10px;font-size:15px}.pkIn .money .inp{padding-left:24px}.pkIn .money:before{left:11px}
+.split{display:flex;flex-direction:column;gap:6px;background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.split div{display:flex;align-items:center;gap:8px;font-size:14px}.split .dot{width:10px;height:10px;border-radius:3px}.split b{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--good)}.split .fee b{color:var(--muted)}
 .paidHead{grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-top:10px;color:var(--good)}.paidHead b{font-size:16px;color:var(--ink)}.paidHead span{font-size:13px;color:var(--muted)}
 .tile.isPaid{opacity:.85}
 .addTile{border:2px dashed #D6D2C8;background:transparent;box-shadow:none;display:grid;place-items:center;min-height:170px;color:var(--muted);font-weight:600}
@@ -255,6 +281,7 @@ textarea.inp{min-height:110px;font-size:12px;font-family:ui-monospace,Consolas,m
 
   <section>
     <div class="sh"><div><h2>Your cards</h2><p>Tap a card to edit it</p></div></div>
+    <div id="dmp"></div>
     <div id="upcoming"></div>
     <div class="grid" id="grid"></div>
   </section>
@@ -529,13 +556,13 @@ function balOf(d){
   return Math.max(0, round2(b));
 }
 function charged(d){ return S.payments.filter(p=>p.debtId===d.id && p.type==='charge').reduce((s,p)=>s+num(p.amount),0); }
-function minSum(){ return S.debts.filter(d=>balOf(d)>0).reduce((s,d)=>s+Math.min(num(d.min), balOf(d)),0); }
+function minSum(){ return S.debts.filter(d=>balOf(d)>0).reduce((s,d)=>s+Math.min(effMin(d), balOf(d)),0); }
 function budget(){ return S.budget==null ? minSum() : num(S.budget); }
 function boostTotal(){ return Object.values(S.boosts||{}).reduce((s,v)=>s+num(v),0); }
 const prio = strat => (a,b) => strat==='snowball' ? (a.b-b.b) || (b.r-a.r) : (b.r-a.r) || (a.b-b.b);
 
 function simulate(monthly, strat, rollover=true){
-  let ds = S.debts.map(d=>({id:d.id,name:d.name,color:d.color,b:balOf(d),r:num(d.apr)/1200,m:num(d.min)})).filter(d=>d.b>0.005);
+  let ds = S.debts.map(d=>({id:d.id,name:d.name,color:d.color,b:balOf(d),r:effApr(d)/1200,m:effMin(d)})).filter(d=>d.b>0.005);
   if(!ds.length) return {ok:true, months:0, interest:0, order:[], track:[]};
   let month=0, interest=0; const order=[], track=[];
   while(ds.some(d=>d.b>0.005) && month<600){
@@ -550,35 +577,188 @@ function simulate(monthly, strat, rollover=true){
   return {ok: !ds.some(d=>d.b>0.005), months:month, interest, order, track};
 }
 function focusDebt(strat){
-  const ds = S.debts.map(d=>({d,b:balOf(d),r:num(d.apr)})).filter(x=>x.b>0);
+  let ds = S.debts.map(d=>({d,b:balOf(d),r:effApr(d)})).filter(x=>x.b>0);
   if(!ds.length) return null;
+  const outside = ds.filter(x=>!inDmp(x.d)); if(outside.length) ds = outside;
   return ds.sort(prio(strat))[0].d;
 }
 
 const DAY = 86400000;
-function monthlyInt(d){ return balOf(d)*num(d.apr)/1200; }
+function monthlyInt(d){ return balOf(d)*effApr(d)/1200; }
 function compact(n){ return n>=1000 ? '$'+(n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'k' : '$'+Math.round(n); }
 function isoLocal(dt){ return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
 function dueInfo(d){
+  if(balOf(d)<=0) return null;
+  if(inDmp(d)) return {cls:'plan', text:`Paid through ${dmpName()}`, plan:true};
   const day = parseInt(d.due,10); if(!day || day<1 || day>31) return null;
+  const pays = S.payments.filter(p=>p.debtId===d.id && p.type!=='charge').map(p=>new Date(p.date+'T00:00:00'));
+  return cycleInfo(day, pays, Array.isArray(d.paidMarks)?d.paidMarks:[], d.created||0);
+}
+
+/* ---------- debt management plan ---------- */
+const DMP = () => (S.dmp && S.dmp.active) ? S.dmp : null;
+const inDmp = d => { const p = DMP(); return !!(p && p.cards && p.cards[d.id]); };
+const dmpName = () => (DMP() && DMP().name) ? DMP().name : 'Debt plan';
+function dmpToDebt(){ const p = DMP(); return p ? Math.max(0, num(p.payment) - num(p.fee)) : 0; }
+function dmpShares(){
+  const p = DMP(); if(!p) return {};
+  const ds = S.debts.filter(d=>inDmp(d) && balOf(d)>0), out = {};
+  if(ds.length && ds.every(d=>num(p.cards[d.id].share)>0)) ds.forEach(d=>out[d.id]=num(p.cards[d.id].share));
+  else { const tb = ds.reduce((s,d)=>s+balOf(d),0) || 1; ds.forEach(d=>out[d.id]=round2(dmpToDebt()*balOf(d)/tb)); }
+  return out;
+}
+function effApr(d){ if(inDmp(d)){ const a = S.dmp.cards[d.id].apr; if(a!=='' && a!=null) return num(a); } return num(d.apr); }
+function effMin(d){ return inDmp(d) ? (dmpShares()[d.id]||0) : num(d.min); }
+const ord = n => n + (['th','st','nd','rd'][((n%100-20)%10>3||(n%100>10&&n%100<14))?0:(n%10>3?0:n%10)] || 'th');
+
+function cycleInfo(day, pays, marks, created){
   const t = new Date(); t.setHours(0,0,0,0);
   const mk = (y,m) => { const last = new Date(y,m+1,0).getDate(); return new Date(y,m,Math.min(day,last)); };
   let next = mk(t.getFullYear(), t.getMonth()); if(next < t) next = mk(t.getFullYear(), t.getMonth()+1);
   const prev = mk(next.getFullYear(), next.getMonth()-1), prev2 = mk(next.getFullYear(), next.getMonth()-2);
   const days = Math.round((next - t)/DAY);
-  const pays = S.payments.filter(p=>p.debtId===d.id && p.type!=='charge').map(p=>new Date(p.date+'T00:00:00'));
-  const marks = Array.isArray(d.paidMarks) ? d.paidMarks : [];
   const markedNext = marks.includes(isoLocal(next)), markedPrev = marks.includes(isoLocal(prev));
   const paidNext = markedNext || pays.some(x=>x>prev && x<=next);
   const paidPrev = markedPrev || pays.some(x=>x>prev2 && x<=prev);
-  const created = d.created || 0;
   const label = next.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-  if(balOf(d)<=0) return null;
   if(!paidPrev && !paidNext && created && created < prev2.getTime()) return {cls:'miss', text:`Missed ${prev.toLocaleDateString('en-US',{month:'short',day:'numeric'})} payment?`, days, next, target:prev, urgent:true};
   if(paidNext) return {cls:'ok', text:`Paid for ${label}`, days, next, marked:markedNext, target:next};
   if(days===0) return {cls:'soon', text:'Due today', days, next, target:next, urgent:true};
   if(days<=7) return {cls:'soon', text:`Due in ${days} day${days>1?'s':''} · ${label}`, days, next, target:next, urgent:true};
   return {cls:'', text:`Due ${label}`, days, next, target:next};
+}
+function dmpDue(){
+  const p = DMP(); if(!p) return null; const day = parseInt(p.day,10); if(!day || day<1 || day>31) return null;
+  if(!S.debts.some(d=>inDmp(d) && balOf(d)>0)) return null;
+  const pays = S.payments.filter(x=>String(x.group||'').startsWith('dmp')).map(x=>new Date(x.date+'T00:00:00'));
+  const created = p.start ? new Date(p.start+'T00:00:00').getTime() : (p.created||0);
+  return cycleInfo(day, pays, Array.isArray(p.paidMarks)?p.paidMarks:[], created);
+}
+function dmpPayoffMonths(){
+  const p = DMP(); if(!p) return null;
+  let ds = S.debts.filter(d=>inDmp(d) && balOf(d)>0).map(d=>({b:balOf(d), r:effApr(d)/1200}));
+  const pay = dmpToDebt(); if(!ds.length) return 0; if(pay<=0) return null;
+  let m = 0;
+  while(ds.some(d=>d.b>0.005) && m<600){
+    m++; ds.forEach(d=>{ if(d.b>0) d.b += d.b*d.r; });
+    let pool = pay; const open = ds.filter(d=>d.b>0.005); const tb = open.reduce((s,d)=>s+d.b,0);
+    open.forEach(d=>{ const x = Math.min(d.b, pay*d.b/tb); d.b -= x; pool -= x; });
+    for(const d of ds.filter(d=>d.b>0.005).sort((a,b)=>b.r-a.r)){ if(pool<=0) break; const x = Math.min(pool, d.b); d.b -= x; pool -= x; }
+  }
+  return m<600 ? m : null;
+}
+function splitDmp(amount){
+  const p = DMP(); const fee = Math.min(num(p.fee), amount);
+  let pool = round2(Math.max(0, amount - num(p.fee)));
+  const ds = S.debts.filter(d=>inDmp(d) && balOf(d)>0), sh = dmpShares(), out = {};
+  ds.forEach(d=>out[d.id]=0);
+  for(let i=0; i<6 && pool>0.009; i++){
+    const open = ds.filter(d=>balOf(d)-out[d.id]>0.009); if(!open.length) break;
+    const base = open.reduce((s,d)=>s+(sh[d.id]||balOf(d)),0) || 1; let used = 0;
+    open.forEach(d=>{ const give = Math.min(round2(pool*(sh[d.id]||balOf(d))/base), round2(balOf(d)-out[d.id])); out[d.id] = round2(out[d.id]+give); used += give; });
+    pool = round2(pool-used); if(used<0.009) break;
+  }
+  if(pool>0.009){ const open = ds.find(d=>balOf(d)-out[d.id]>0.009); if(open){ const g = Math.min(pool, round2(balOf(open)-out[open.id])); out[open.id] = round2(out[open.id]+g); pool = round2(pool-g); } }
+  return { parts:out, fee, extra:pool };
+}
+
+function renderDmp(){
+  const el = $('#dmp'); const p = DMP();
+  if(!p){
+    el.innerHTML = S.debts.some(d=>balOf(d)>0) ? `<button class="dmpSetup" id="dmpSetup"><div class="sq">${I('card',18)}</div><span><b>In a debt management plan?</b><small>Group the cards it covers and track the monthly payment</small></span>${I('arrowRight',16)}</button>` : '';
+    if($('#dmpSetup')) $('#dmpSetup').onclick = openDmpEdit;
+    return;
+  }
+  const ds = S.debts.filter(inDmp);
+  const bal = ds.reduce((s,d)=>s+balOf(d),0), st = ds.reduce((s,d)=>s+num(d.start)+charged(d),0);
+  const pct = st>0 ? Math.min(100,(st-bal)/st*100) : 0;
+  const due = dmpDue(), months = dmpPayoffMonths();
+  const done = ds.length && bal<=0;
+  el.innerHTML = `<div class="dmp">
+    <div class="dmpTop"><div><small>Debt management plan</small><h3>${esc(dmpName())}</h3>
+      <p>${fmt2(num(p.payment))}/month · due the ${ord(parseInt(p.day,10)||1)}${num(p.fee)?` · includes ${fmt2(num(p.fee))} fee`:''}</p></div>
+      <button class="btn sm" id="dmpEdit">Edit</button></div>
+    <div class="dmpBal"><b>${fmt2(bal)}</b><span>${done?'Every plan card is paid off':`left on ${ds.filter(d=>balOf(d)>0).length} plan card${ds.filter(d=>balOf(d)>0).length===1?'':'s'} · ${Math.round(pct)}% paid`}</span></div>
+    <div class="bar dmpBar">${ds.map(d=>{ const w = st>0 ? (num(d.start)+charged(d)-balOf(d))/st*100 : 0; return `<i style="width:${w}%;background:${d.color}"></i>`; }).join('')}</div>
+    <div class="dmpCards">${ds.map(d=>`<span class="${balOf(d)<=0?'done':''}"><i style="background:${d.color}"></i>${esc(d.name)} <b>${balOf(d)<=0?'Paid off':fmt2(balOf(d))}</b></span>`).join('')}</div>
+    ${!done && months ? `<p class="note">At this payment, plan cards are paid off around <b>${monthLabel(months)}</b> (${months} month${months>1?'s':''}).</p>` : ''}
+    ${due ? `<div class="dueRow"><div class="due ${due.cls}">${I(due.cls==='ok'?'check':due.cls==='miss'?'stop':'calendar',13,2.2)}${due.text}</div>${due.cls==='ok' ? (due.marked?`<span class="dueAct" id="dmpUnmark">Undo</span>`:'') : `<span class="dueAct" id="dmpPaid">${I('check',12,2.6)}Payment made</span>`}</div>` : ''}
+  </div>`;
+  $('#dmpEdit').onclick = openDmpEdit;
+  if($('#dmpPaid')) $('#dmpPaid').onclick = openDmpPay;
+  if($('#dmpUnmark')) $('#dmpUnmark').onclick = () => { S.dmp.paidMarks = (S.dmp.paidMarks||[]).filter(x=>x!==isoLocal(due.target)); commit(); toast('Unmarked. Reminders are back on for that date.'); };
+}
+
+function openDmpEdit(){
+  const p = S.dmp && S.dmp.active ? S.dmp : { name:'', payment:'', fee:'', day:'', start:today(), cards:{} };
+  const cards = S.debts.filter(d=>balOf(d)>0 || (p.cards||{})[d.id]);
+  openSheet(`<h3>${DMP()?'Edit your plan':'Set up your debt plan'}</h3><p class="sub">Enter the details from your plan agreement. You make one payment a month, and the program splits it across these cards.</p>
+    <div class="field"><label>Program name</label><input class="inp" id="dName" maxlength="40" value="${esc(p.name)}" placeholder="Debt management plan"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field"><label>Monthly payment</label><div class="money"><input class="inp" id="dPay" inputmode="decimal" value="${p.payment}" placeholder="450"></div></div>
+      <div class="field"><label>Due day of month</label><input class="inp" id="dDay" inputmode="numeric" value="${p.day}" placeholder="15"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field"><label>Monthly fee (if any)</label><div class="money"><input class="inp" id="dFee" inputmode="decimal" value="${p.fee}" placeholder="0"></div></div>
+      <div class="field"><label>Plan start date</label><input class="inp" id="dStart" type="date" value="${esc(p.start||today())}"></div>
+    </div>
+    <div class="field"><label>Cards in the plan</label>
+      <p class="note" style="margin:0 0 4px">The plan APR and monthly amount per card are optional. Your agreement usually lists them.</p>
+      <div class="dmpPick">${cards.map(d=>{ const c = (p.cards||{})[d.id]; return `<div class="pk ${c?'on':''}" data-id="${d.id}">
+        <label class="pkTop"><input type="checkbox" ${c?'checked':''}><i class="box">${I('check',13,3)}</i><span class="dot" style="background:${d.color}"></span><b>${esc(d.name)}</b><span class="pkBal">${fmt2(balOf(d))}</span></label>
+        <div class="pkIn"><div><label>Plan APR %</label><input class="inp" data-k="apr" inputmode="decimal" value="${c&&c.apr!=null?c.apr:''}" placeholder="${num(d.apr)||''}"></div><div><label>Monthly to this card</label><div class="money"><input class="inp" data-k="share" inputmode="decimal" value="${c&&c.share?c.share:''}" placeholder="auto"></div></div></div>
+      </div>`; }).join('') || '<p class="note">Add your cards first.</p>'}</div></div>
+    <p class="note">Cards in the plan get one combined reminder for the plan payment instead of separate card reminders.</p>
+    <div class="acts">${DMP()?'<button class="btn danger" id="dEnd">End plan</button>':'<button class="btn" id="dCancel">Cancel</button>'}<button class="btn dark" id="dSave">${DMP()?'Save':'Start tracking'}</button></div>`);
+  $('#sheet').querySelectorAll('.pk input[type=checkbox]').forEach(cb=>cb.onchange=()=>cb.closest('.pk').classList.toggle('on', cb.checked));
+  if($('#dCancel')) $('#dCancel').onclick = closeSheet;
+  if($('#dEnd')) $('#dEnd').onclick = () => confirmBox('End the plan?','Your cards and payment history stay. The cards go back to their own reminders.','End plan', ()=>{ S.dmp = { ...S.dmp, active:false }; commit(); toast('Plan ended'); });
+  $('#dSave').onclick = () => {
+    const pay = round2(num($('#dPay').value)), day = parseInt($('#dDay').value,10);
+    if(pay<=0){ $('#dPay').focus(); toast('Enter the monthly plan payment'); return; }
+    if(!(day>=1 && day<=31)){ $('#dDay').focus(); toast('Enter the due day (1–31)'); return; }
+    const picked = {};
+    $('#sheet').querySelectorAll('.pk').forEach(row=>{
+      if(!row.querySelector('input[type=checkbox]').checked) return;
+      const aprV = row.querySelector('[data-k=apr]').value.trim(), shV = row.querySelector('[data-k=share]').value.trim();
+      picked[row.dataset.id] = { apr: aprV===''?'':round2(Math.max(0,num(aprV))), share: shV===''?'':round2(Math.max(0,num(shV))) };
+    });
+    if(!Object.keys(picked).length){ toast('Pick at least one card in the plan'); return; }
+    const was = DMP();
+    S.dmp = { active:true, name:$('#dName').value.trim(), payment:pay, fee:round2(Math.max(0,num($('#dFee').value))), day, start:$('#dStart').value||today(), cards:picked, paidMarks:(was&&was.paidMarks)||[], created:(was&&was.created)||Date.now() };
+    closeSheet(); commit(); toast(was?'Plan updated':'Plan set up. One payment, one reminder.');
+  };
+}
+
+function openDmpPay(){
+  const p = DMP(); const due = dmpDue(); if(!p || !due || !due.target) return;
+  const iso = isoLocal(due.target), when = due.target.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  openSheet(`<h3>Plan payment made?</h3><p class="sub">This marks the ${when} plan payment as paid, so you won't get reminders for it.</p>
+    <div class="field"><label>Amount you paid</label><div class="money"><input class="inp" id="qAmt" inputmode="decimal" value="${num(p.payment)}" style="font-size:22px;font-weight:700"></div></div>
+    <div class="field"><label>How it's split</label><div class="split" id="qSplit"></div></div>
+    <div class="field"><label>Date paid</label><input class="inp" id="qDate" type="date" value="${today()}"></div>
+    <div class="acts"><button class="btn" id="qOnly">Just mark paid</button><button class="btn good" id="qLog">${I('arrowDown',17,2.4)} Log and mark</button></div>`);
+  const drawSplit = () => {
+    const sp = splitDmp(round2(num($('#qAmt').value)));
+    $('#qSplit').innerHTML = S.debts.filter(d=>sp.parts[d.id]!=null).map(d=>`<div><span class="dot" style="background:${d.color}"></span>${esc(d.name)}<b>−${fmt2(sp.parts[d.id])}</b></div>`).join('')
+      + (sp.fee ? `<div class="fee"><span class="dot" style="background:#C9C5BB"></span>Program fee<b>${fmt2(sp.fee)}</b></div>` : '')
+      + (sp.extra>0.009 ? `<div class="fee"><span class="dot" style="background:#C9C5BB"></span>More than the balances<b>${fmt2(sp.extra)}</b></div>` : '');
+  };
+  drawSplit(); $('#qAmt').oninput = drawSplit;
+  const mark = () => { S.dmp.paidMarks = [...new Set([...(S.dmp.paidMarks||[]), iso])].slice(-24); };
+  $('#qOnly').onclick = () => { mark(); closeSheet(); commit(); toast(`Plan payment marked paid for ${when}`); };
+  $('#qLog').onclick = () => {
+    const amt = round2(num($('#qAmt').value)); if(amt<=0){ $('#qAmt').focus(); toast('Enter an amount, or tap Just mark paid'); return; }
+    const sp = splitDmp(amt), group = 'dmp:' + uid(), date = $('#qDate').value || today();
+    const entries = S.debts.filter(d=>sp.parts[d.id]>0).map(d=>({ d, amt:sp.parts[d.id], before:balOf(d) }));
+    if(!entries.length){ toast('Nothing left to pay on the plan cards'); return; }
+    entries.forEach(e=>S.payments.push({ id:uid(), debtId:e.d.id, amount:e.amt, type:'payment', date, note:`${dmpName()} payment`, group, ts:Date.now() }));
+    mark(); closeSheet();
+    const big = entries.sort((a,b)=>b.amt-a.amt)[0];
+    const others = entries.filter(e=>e!==big && e.before-e.amt<=0.005).map(e=>e.d.name);
+    dropAnimation(big.d, big.amt, big.before);
+    if(others.length) setTimeout(()=>toast(`${others.join(' and ')} paid off too!`), 3200);
+  };
 }
 
 /* ---------- render ---------- */
@@ -605,18 +785,18 @@ function render(){
     return `<button class="tile ${isPaid?'isPaid':''}" data-id="${d.id}">
       <div class="tint" style="background:${d.color}"></div>
       <div class="top"><div class="name"><span class="dot" style="background:${d.color}"></span>${esc(d.name)}</div>
-      ${isPaid?'<span class="badge paid">'+I('check',12,3)+' PAID OFF</span>': f&&f.id===d.id?'<span class="badge">'+I('target',12,2.4)+' FOCUS</span>':''}</div>
+      ${isPaid?'<span class="badge paid">'+I('check',12,3)+' PAID OFF</span>': inDmp(d)?'<span class="badge plan">'+I('card',12,2.4)+' PLAN</span>' : f&&f.id===d.id?'<span class="badge">'+I('target',12,2.4)+' FOCUS</span>':''}</div>
       <div class="bal" data-bal="${d.id}">${fmt2(b)}</div>
       <div class="of">of ${fmt2(st)} · ${Math.round(p)}% paid</div>
       <div class="bar"><i style="width:${p}%;background:${d.color}"></i></div>
-      <div class="meta"><span>${num(d.apr)?num(d.apr)+'% APR':'APR not set'}</span><span>Min ${fmt2(num(d.min))}</span>${!isPaid&&num(d.apr)?`<span>≈ ${fmt(monthlyInt(d))}/mo interest</span>`:''}</div>
-      ${(()=>{ const di = dueInfo(d); if(!di) return ''; const act = di.cls==='ok' ? (di.marked ? `<span class="dueAct" data-unmark="${d.id}" data-iso="${isoLocal(di.target)}">Undo</span>` : '') : `<span class="dueAct" data-made="${d.id}">${I('check',12,2.6)}Payment made</span>`; return `<div class="dueRow"><div class="due ${di.cls}">${I(di.cls==='ok'?'check':di.cls==='miss'?'stop':'calendar',13,2.2)}${di.text}</div>${act}</div>`; })()}
+      <div class="meta"><span>${(effApr(d)||inDmp(d))?effApr(d)+'% APR'+(inDmp(d)?' (plan)':''):'APR not set'}</span><span>${inDmp(d)&&!isPaid?'Plan '+fmt2(effMin(d))+'/mo':'Min '+fmt2(num(d.min))}</span>${!isPaid&&effApr(d)?`<span>≈ ${fmt(monthlyInt(d))}/mo interest</span>`:''}</div>
+      ${(()=>{ const di = dueInfo(d); if(!di) return ''; const act = di.plan ? '' : di.cls==='ok' ? (di.marked ? `<span class="dueAct" data-unmark="${d.id}" data-iso="${isoLocal(di.target)}">Undo</span>` : '') : `<span class="dueAct" data-made="${d.id}">${I('check',12,2.6)}Payment made</span>`; return `<div class="dueRow"><div class="due ${di.cls}">${I(di.plan?'card':di.cls==='ok'?'check':di.cls==='miss'?'stop':'calendar',13,2.2)}${esc(di.text)}</div>${act}</div>`; })()}
     </button>`;
   };
   $('#grid').innerHTML = active.map(tileHTML).join('') + `<button class="tile addTile" id="addCard"><div><span>${I('plus',22,2.2)}</span>Add a card</div></button>`
     + (paidOff.length ? `<div class="paidHead">${I('checkCircle',18)}<b>Paid off</b><span>${paidOff.length} card${paidOff.length>1?'s':''} · ${fmt2(paidOff.reduce((s,d)=>s+num(d.start)+charged(d),0))} cleared</span></div>` + paidOff.map(tileHTML).join('') : '');
 
-  renderUpcoming(); renderChart(plan); renderInterest();
+  renderDmp(); renderUpcoming(); renderChart(plan); renderInterest();
   renderPlan(plan, f); renderIdeas(); renderTips(plan, f); renderHist();
 }
 
@@ -624,11 +804,13 @@ function renderUpcoming(){
   const el = $('#upcoming'); const active = S.debts.filter(d=>balOf(d)>0);
   if(!active.length){ el.innerHTML=''; return; }
   const withDue = active.map(d=>({d, di:dueInfo(d)})).filter(x=>x.di);
-  if(!withDue.length){ el.innerHTML = `<div class="upnote">${I('calendar',16)}Add due dates to your cards to see what's coming up.</div>`; return; }
-  const list = withDue.filter(x=>x.di.cls==='miss' || (x.di.cls!=='ok' && x.di.days<=14)).sort((a,b)=>(a.di.cls==='miss'?-1:0)-(b.di.cls==='miss'?-1:0) || a.di.days-b.di.days);
-  if(!list.length){ el.innerHTML = `<div class="upnote">${I('check',16)}You're all caught up for the next two weeks.</div>`; return; }
-  el.innerHTML = `<div class="upcoming">` + list.map(({d,di})=>`<button class="up ${di.cls}" data-pay="${d.id}"><div class="sq" style="background:${d.color}">${I(di.cls==='miss'?'stop':'calendar',17)}</div><div><b>${esc(d.name)} · ${fmt2(Math.min(num(d.min)||balOf(d),balOf(d)))}</b><span>${esc(di.text)}</span></div></button>`).join('') + `</div>`;
+  if(!withDue.length && !dmpDue()){ el.innerHTML = `<div class="upnote">${I('calendar',16)}Add due dates to your cards to see what's coming up.</div>`; return; }
+  const dd = dmpDue(); const dItem = dd && (dd.cls==='miss' || (dd.cls!=='ok' && dd.days<=14)) ? `<button class="up ${dd.cls}" data-dmppay="1"><div class="sq" style="background:var(--ink)">${I(dd.cls==='miss'?'stop':'card',17)}</div><div><b>${esc(dmpName())} · ${fmt2(num(S.dmp.payment))}</b><span>${esc(dd.text)}</span></div></button>` : '';
+  const list = withDue.filter(x=>!x.di.plan && (x.di.cls==='miss' || (x.di.cls!=='ok' && x.di.days<=14))).sort((a,b)=>(a.di.cls==='miss'?-1:0)-(b.di.cls==='miss'?-1:0) || a.di.days-b.di.days);
+  if(!list.length && !dItem){ el.innerHTML = `<div class="upnote">${I('check',16)}You're all caught up for the next two weeks.</div>`; return; }
+  el.innerHTML = `<div class="upcoming">` + dItem + list.map(({d,di})=>`<button class="up ${di.cls}" data-pay="${d.id}"><div class="sq" style="background:${d.color}">${I(di.cls==='miss'?'stop':'calendar',17)}</div><div><b>${esc(d.name)} · ${fmt2(Math.min(num(d.min)||balOf(d),balOf(d)))}</b><span>${esc(di.text)}</span></div></button>`).join('') + `</div>`;
   el.querySelectorAll('[data-pay]').forEach(b=>b.onclick=()=>openPayment(b.dataset.pay));
+  el.querySelectorAll('[data-dmppay]').forEach(b=>b.onclick=openDmpPay);
 }
 
 function renderInterest(){
@@ -639,7 +821,7 @@ function renderInterest(){
   const max = Math.max(1, ...rows.map(r=>r.v));
   el.innerHTML = `<h3 style="font-size:17px;font-weight:700">What interest costs you</h3>
     <div style="display:flex;gap:18px;margin-top:10px;flex-wrap:wrap"><div><b style="font-size:26px;font-weight:800;font-variant-numeric:tabular-nums">${fmt2(round2(total))}</b><div class="note" style="margin:0">per month</div></div><div><b style="font-size:26px;font-weight:800;font-variant-numeric:tabular-nums">${fmt2(round2(total*12/365))}</b><div class="note" style="margin:0">per day</div></div><div><b style="font-size:26px;font-weight:800;font-variant-numeric:tabular-nums">${fmt(total*12)}</b><div class="note" style="margin:0">per year</div></div></div>
-    <div class="intRow">${rows.map(r=>`<div><span class="nm">${esc(r.d.name)}</span><span class="track"><i style="width:${r.v/max*100}%;background:${r.d.color}"></i></span><span class="v">${num(r.d.apr)?fmt2(round2(r.v))+'/mo':'no APR'}</span></div>`).join('')}</div>
+    <div class="intRow">${rows.map(r=>`<div><span class="nm">${esc(r.d.name)}</span><span class="track"><i style="width:${r.v/max*100}%;background:${r.d.color}"></i></span><span class="v">${effApr(r.d)?fmt2(round2(r.v))+'/mo':'no APR'}</span></div>`).join('')}</div>
     <p class="note">This is money that doesn't lower your balance. Every extra dollar you pay shrinks it.</p>`;
 }
 
@@ -737,9 +919,9 @@ function renderTips(plan, f){
   if(!S.debts.length){ tips.push(['wave','Start with your cards','Add each card with its balance, APR and minimum. The more accurate, the smarter your plan.']); }
   const intTot = active.reduce((s,d)=>s+monthlyInt(d),0);
   if(intTot>=5 && f) tips.push(['down',`Interest is costing ${fmt(intTot)}/month`,`That's about ${fmt2(round2(intTot*12/365))} a day. ${esc(f.name)} alone costs ${fmt(monthlyInt(f))}/mo — paying it down first shrinks this fastest.`]);
-  const hi = active.filter(d=>num(d.apr)>=20).sort((a,b)=>num(b.apr)-num(a.apr))[0];
+  const hi = active.filter(d=>!inDmp(d)&&num(d.apr)>=20).sort((a,b)=>num(b.apr)-num(a.apr))[0];
   if(hi){ const save = balOf(hi)*0.05; tips.push(['call',`Call ${hi.name} for a lower rate`,`At ${num(hi.apr)}% APR, a 5-point cut saves about ${fmt(save)}/year. Ask: "I've been a loyal customer — can you lower my APR?" It works more than you'd think.`]); }
-  const bt = active.filter(d=>num(d.apr)>=18 && balOf(d)>=1500).sort((a,b)=>balOf(b)*num(b.apr)-balOf(a)*num(a.apr))[0];
+  const bt = active.filter(d=>!inDmp(d)&&num(d.apr)>=18 && balOf(d)>=1500).sort((a,b)=>balOf(b)*num(b.apr)-balOf(a)*num(a.apr))[0];
   if(bt) tips.push(['transfer','Consider a 0% balance transfer',`Moving ${bt.name} (${fmt(balOf(bt))}) to a 0% intro card could pause about ${fmt(balOf(bt)*num(bt.apr)/1200)}/mo in interest. Watch the 3–5% fee and pay it off before the promo ends.`]);
   if(f && budget()>minSum()+1) tips.push(['target','Your extra is working',`Every dollar above minimums goes to ${f.name}. When it's gone, its payment rolls to the next card automatically — your payments snowball without spending more.`]);
   if(f && budget()<=minSum()+1 && active.length){ const a=simulate(minSum(),S.strategy), b=simulate(minSum()+50,S.strategy); if(a.ok&&b.ok&&a.months>b.months) tips.push(['plus','Just $50 more matters',`Adding $50/month would get you out ${a.months-b.months} months sooner and save ${fmt(a.interest-b.interest)}. Check "Find extra money" for painless places to get it.`]); }
@@ -763,7 +945,7 @@ function renderHist(){
     const dt = new Date(p.date+'T12:00:00');
     return `<div class="hrow"><span class="dot" style="background:${d.color}"></span><div class="w"><b>${esc(d.name)}</b><span>${isNaN(dt)?esc(p.date):dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}${chg?' · new charge / interest':''}${p.note?' · '+esc(p.note):''}</span></div><div class="amt ${chg?'chg':'pay'}">${chg?'+':'−'}${fmt2(num(p.amount))}</div><button class="x" data-del="${p.id}" title="Delete">×</button></div>`;
   }).join('');
-  $('#hist').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>confirmBox('Delete this entry?','The card balance will be recalculated.','Delete',()=>{ S.payments=S.payments.filter(p=>p.id!==b.dataset.del); commit(); }));
+  $('#hist').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ const e = S.payments.find(p=>p.id===b.dataset.del); const g = e && e.group; confirmBox(g?'Delete this plan payment?':'Delete this entry?', g?'This removes the whole plan payment from every card it was split across.':'The card balance will be recalculated.','Delete',()=>{ S.payments = S.payments.filter(p=> g ? p.group!==g : p.id!==b.dataset.del); commit(); }); });
 }
 
 function shade(hex, pct){ const n=parseInt(hex.slice(1),16); let r=n>>16,g=n>>8&255,b=n&255; const f=pct/100; r=Math.round(Math.min(255,Math.max(0,r+r*f))); g=Math.round(Math.min(255,Math.max(0,g+g*f))); b=Math.round(Math.min(255,Math.max(0,b+b*f))); return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1); }
