@@ -62,7 +62,7 @@ export function buildReminders(state, push, now = new Date()) {
   }
 
   for (const d of debts) {
-    if (planCards.has(d.id)) continue;
+    if (planCards.has(d.id) || d.closed) continue;
     const day = parseInt(d.due, 10);
     if (!day || day < 1 || day > 31) continue;
     const bal = balance(d, payments);

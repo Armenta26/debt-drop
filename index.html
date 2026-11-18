@@ -102,6 +102,13 @@ section{margin-top:26px}
 .pkIn label{font-size:11.5px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px}.pkIn .inp{padding:9px 10px;font-size:15px}.pkIn .money .inp{padding-left:24px}.pkIn .money:before{left:11px}
 .split{display:flex;flex-direction:column;gap:6px;background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
 .split div{display:flex;align-items:center;gap:8px;font-size:14px}.split .dot{width:10px;height:10px;border-radius:3px}.split b{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--good)}.split .fee b{color:var(--muted)}
+.pkStat{grid-column:1/-1}.pkStat .seg{display:grid;grid-template-columns:1fr 1fr;width:100%}.pkStat .seg button{padding:7px 10px;justify-content:center}
+.pkTop em,.dmpCards em{font-style:normal;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);background:var(--soft);border:1px solid var(--line);padding:1px 6px;border-radius:6px;margin-left:4px}
+.addAcct{margin-top:10px}.aaForm{background:var(--soft);border:1px dashed #D6D2C8;border-radius:14px;padding:4px 12px 12px;margin-top:4px}
+.closedTag{font-weight:700;color:#5F5E5A;background:rgba(0,0,0,.05);padding:0 7px;border-radius:6px}
+#cStat{display:grid;grid-template-columns:1fr 1fr;width:100%}#cStat button{justify-content:center}
+.paidOffBtn{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin-top:14px;padding:12px 14px;border-radius:14px;background:var(--goodSoft);border:1px solid #BFE9D6;color:#0C6B47}
+.paidOffBtn b{display:block;font-size:14.5px}.paidOffBtn small{font-size:12.5px;opacity:.85}
 .paidHead{grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-top:10px;color:var(--good)}.paidHead b{font-size:16px;color:var(--ink)}.paidHead span{font-size:13px;color:var(--muted)}
 .tile.isPaid{opacity:.85}
 .addTile{border:2px dashed #D6D2C8;background:transparent;box-shadow:none;display:grid;place-items:center;min-height:170px;color:var(--muted);font-weight:600}
@@ -590,6 +597,7 @@ function isoLocal(dt){ return dt.getFullYear()+'-'+String(dt.getMonth()+1).padSt
 function dueInfo(d){
   if(balOf(d)<=0) return null;
   if(inDmp(d)) return {cls:'plan', text:`Paid through ${dmpName()}`, plan:true};
+  if(d.closed) return {cls:'', text:'Closed account', plan:true};
   const day = parseInt(d.due,10); if(!day || day<1 || day>31) return null;
   const pays = S.payments.filter(p=>p.debtId===d.id && p.type!=='charge').map(p=>new Date(p.date+'T00:00:00'));
   return cycleInfo(day, pays, Array.isArray(d.paidMarks)?d.paidMarks:[], d.created||0);
@@ -680,7 +688,7 @@ function renderDmp(){
       <button class="btn sm" id="dmpEdit">Edit</button></div>
     <div class="dmpBal"><b>${fmt2(bal)}</b><span>${done?'Every plan card is paid off':`left on ${ds.filter(d=>balOf(d)>0).length} plan card${ds.filter(d=>balOf(d)>0).length===1?'':'s'} · ${Math.round(pct)}% paid`}</span></div>
     <div class="bar dmpBar">${ds.map(d=>{ const w = st>0 ? (num(d.start)+charged(d)-balOf(d))/st*100 : 0; return `<i style="width:${w}%;background:${d.color}"></i>`; }).join('')}</div>
-    <div class="dmpCards">${ds.map(d=>`<span class="${balOf(d)<=0?'done':''}"><i style="background:${d.color}"></i>${esc(d.name)} <b>${balOf(d)<=0?'Paid off':fmt2(balOf(d))}</b></span>`).join('')}</div>
+    <div class="dmpCards">${ds.map(d=>`<span class="${balOf(d)<=0?'done':''}"><i style="background:${d.color}"></i>${esc(d.name)}${d.closed?' <em>closed</em>':''} <b>${balOf(d)<=0?'Paid off':fmt2(balOf(d))}</b></span>`).join('')}</div>
     ${!done && months ? `<p class="note">At this payment, plan cards are paid off around <b>${monthLabel(months)}</b> (${months} month${months>1?'s':''}).</p>` : ''}
     ${due ? `<div class="dueRow"><div class="due ${due.cls}">${I(due.cls==='ok'?'check':due.cls==='miss'?'stop':'calendar',13,2.2)}${due.text}</div>${due.cls==='ok' ? (due.marked?`<span class="dueAct" id="dmpUnmark">Undo</span>`:'') : `<span class="dueAct" id="dmpPaid">${I('check',12,2.6)}Payment made</span>`}</div>` : ''}
   </div>`;
@@ -689,6 +697,16 @@ function renderDmp(){
   if($('#dmpUnmark')) $('#dmpUnmark').onclick = () => { S.dmp.paidMarks = (S.dmp.paidMarks||[]).filter(x=>x!==isoLocal(due.target)); commit(); toast('Unmarked. Reminders are back on for that date.'); };
 }
 
+function pkRow(o){
+  const c = o.c;
+  return `<div class="pk ${c?'on':''}" data-id="${o.id}"${o.isNew?` data-new="1" data-name="${esc(o.name)}" data-color="${o.color}" data-bal="${o.bal}"`:''}>
+    <label class="pkTop"><input type="checkbox" ${c?'checked':''}><i class="box">${I('check',13,3)}</i><span class="dot" style="background:${o.color}"></span><b>${esc(o.name)}${o.isNew?' <em>new</em>':''}</b><span class="pkBal">${fmt2(o.bal)}</span></label>
+    <div class="pkIn">
+      <div class="pkStat"><label>Account status</label><div class="seg"><button type="button" data-st="open" class="${o.closed?'':'on'}">Active</button><button type="button" data-st="closed" class="${o.closed?'on':''}">Closed</button></div></div>
+      <div><label>Plan APR %</label><input class="inp" data-k="apr" inputmode="decimal" value="${c&&c.apr!=null?c.apr:''}" placeholder="${o.aprPh}"></div>
+      <div><label>Monthly to this card</label><div class="money"><input class="inp" data-k="share" inputmode="decimal" value="${c&&c.share?c.share:''}" placeholder="auto"></div></div>
+    </div></div>`;
+}
 function openDmpEdit(){
   const p = S.dmp && S.dmp.active ? S.dmp : { name:'', payment:'', fee:'', day:'', start:today(), cards:{} };
   const cards = S.debts.filter(d=>balOf(d)>0 || (p.cards||{})[d.id]);
@@ -704,26 +722,45 @@ function openDmpEdit(){
     </div>
     <div class="field"><label>Cards in the plan</label>
       <p class="note" style="margin:0 0 4px">The plan APR and monthly amount per card are optional. Your agreement usually lists them.</p>
-      <div class="dmpPick">${cards.map(d=>{ const c = (p.cards||{})[d.id]; return `<div class="pk ${c?'on':''}" data-id="${d.id}">
-        <label class="pkTop"><input type="checkbox" ${c?'checked':''}><i class="box">${I('check',13,3)}</i><span class="dot" style="background:${d.color}"></span><b>${esc(d.name)}</b><span class="pkBal">${fmt2(balOf(d))}</span></label>
-        <div class="pkIn"><div><label>Plan APR %</label><input class="inp" data-k="apr" inputmode="decimal" value="${c&&c.apr!=null?c.apr:''}" placeholder="${num(d.apr)||''}"></div><div><label>Monthly to this card</label><div class="money"><input class="inp" data-k="share" inputmode="decimal" value="${c&&c.share?c.share:''}" placeholder="auto"></div></div></div>
-      </div>`; }).join('') || '<p class="note">Add your cards first.</p>'}</div></div>
+      <div class="dmpPick">${cards.map(d=>pkRow({ id:d.id, name:d.name, color:d.color, bal:balOf(d), aprPh:num(d.apr)||'', c:(p.cards||{})[d.id], closed:!!d.closed })).join('') || '<p class="note">No cards yet. Add accounts below.</p>'}</div>
+      <div class="addAcct"><button type="button" class="btn sm" id="aaOpen">${I('plus',15,2.4)} Add an account that isn't listed</button>
+        <div class="aaForm" id="aaForm" style="display:none">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="field"><label>Account name</label><input class="inp" id="aaName" maxlength="30" placeholder="Store card"></div><div class="field"><label>Balance owed</label><div class="money"><input class="inp" id="aaBal" inputmode="decimal" placeholder="1,200"></div></div></div>
+          <p class="note">It's added to the plan as a closed account. You can switch it to active.</p>
+          <button type="button" class="btn sm dark" id="aaAdd" style="margin-top:8px">Add to plan</button>
+        </div></div></div>
     <p class="note">Cards in the plan get one combined reminder for the plan payment instead of separate card reminders.</p>
     <div class="acts">${DMP()?'<button class="btn danger" id="dEnd">End plan</button>':'<button class="btn" id="dCancel">Cancel</button>'}<button class="btn dark" id="dSave">${DMP()?'Save':'Start tracking'}</button></div>`);
-  $('#sheet').querySelectorAll('.pk input[type=checkbox]').forEach(cb=>cb.onchange=()=>cb.closest('.pk').classList.toggle('on', cb.checked));
+  const sheet = $('#sheet');
+  sheet.onchange = e => { if(e.target.matches('.pk input[type=checkbox]')) e.target.closest('.pk').classList.toggle('on', e.target.checked); };
+  sheet.addEventListener('click', e => { const b = e.target.closest('.pkStat [data-st]'); if(!b) return; b.parentElement.querySelectorAll('button').forEach(x=>x.classList.toggle('on', x===b)); });
+  $('#aaOpen').onclick = () => { $('#aaForm').style.display = ''; $('#aaOpen').style.display = 'none'; $('#aaName').focus(); };
+  $('#aaAdd').onclick = () => {
+    const name = $('#aaName').value.trim(), bal = round2(num($('#aaBal').value));
+    if(!name){ $('#aaName').focus(); toast('Enter the account name'); return; }
+    if(bal<=0){ $('#aaBal').focus(); toast('Enter the balance owed'); return; }
+    const used = new Set(S.debts.map(d=>d.color)), color = COLORS.find(c=>!used.has(c)) || COLORS[(S.debts.length + sheet.querySelectorAll('.pk').length) % COLORS.length];
+    sheet.querySelector('.dmpPick').insertAdjacentHTML('beforeend', pkRow({ id:'new-'+uid(), isNew:true, name, color, bal, aprPh:'', c:{}, closed:true }));
+    $('#aaName').value = ''; $('#aaBal').value = ''; toast(`${name} added. Save to finish.`);
+  };
   if($('#dCancel')) $('#dCancel').onclick = closeSheet;
   if($('#dEnd')) $('#dEnd').onclick = () => confirmBox('End the plan?','Your cards and payment history stay. The cards go back to their own reminders.','End plan', ()=>{ S.dmp = { ...S.dmp, active:false }; commit(); toast('Plan ended'); });
   $('#dSave').onclick = () => {
     const pay = round2(num($('#dPay').value)), day = parseInt($('#dDay').value,10);
     if(pay<=0){ $('#dPay').focus(); toast('Enter the monthly plan payment'); return; }
     if(!(day>=1 && day<=31)){ $('#dDay').focus(); toast('Enter the due day (1–31)'); return; }
-    const picked = {};
+    const picked = {}, newDebts = [], status = {};
     $('#sheet').querySelectorAll('.pk').forEach(row=>{
       if(!row.querySelector('input[type=checkbox]').checked) return;
       const aprV = row.querySelector('[data-k=apr]').value.trim(), shV = row.querySelector('[data-k=share]').value.trim();
-      picked[row.dataset.id] = { apr: aprV===''?'':round2(Math.max(0,num(aprV))), share: shV===''?'':round2(Math.max(0,num(shV))) };
+      const closed = (row.querySelector('.pkStat .on')||{}).dataset?.st === 'closed';
+      let id = row.dataset.id;
+      if(row.dataset.new){ id = uid(); newDebts.push({ id, name:row.dataset.name, color:row.dataset.color, start:round2(num(row.dataset.bal)), apr:aprV===''?'':round2(Math.max(0,num(aprV))), min:'', due:'', closed, created:Date.now() }); }
+      else status[id] = closed;
+      picked[id] = { apr: aprV===''?'':round2(Math.max(0,num(aprV))), share: shV===''?'':round2(Math.max(0,num(shV))) };
     });
     if(!Object.keys(picked).length){ toast('Pick at least one card in the plan'); return; }
+    S.debts = S.debts.map(d=> d.id in status ? { ...d, closed:status[d.id] } : d).concat(newDebts);
     const was = DMP();
     S.dmp = { active:true, name:$('#dName').value.trim(), payment:pay, fee:round2(Math.max(0,num($('#dFee').value))), day, start:$('#dStart').value||today(), cards:picked, paidMarks:(was&&was.paidMarks)||[], created:(was&&was.created)||Date.now() };
     closeSheet(); commit(); toast(was?'Plan updated':'Plan set up. One payment, one reminder.');
@@ -789,7 +826,7 @@ function render(){
       <div class="bal" data-bal="${d.id}">${fmt2(b)}</div>
       <div class="of">of ${fmt2(st)} · ${Math.round(p)}% paid</div>
       <div class="bar"><i style="width:${p}%;background:${d.color}"></i></div>
-      <div class="meta"><span>${(effApr(d)||inDmp(d))?effApr(d)+'% APR'+(inDmp(d)?' (plan)':''):'APR not set'}</span><span>${inDmp(d)&&!isPaid?'Plan '+fmt2(effMin(d))+'/mo':'Min '+fmt2(num(d.min))}</span>${!isPaid&&effApr(d)?`<span>≈ ${fmt(monthlyInt(d))}/mo interest</span>`:''}</div>
+      <div class="meta">${d.closed&&!isPaid?'<span class="closedTag">Closed</span>':''}<span>${(effApr(d)||inDmp(d))?effApr(d)+'% APR'+(inDmp(d)?' (plan)':''):'APR not set'}</span><span>${inDmp(d)&&!isPaid?'Plan '+fmt2(effMin(d))+'/mo':'Min '+fmt2(num(d.min))}</span>${!isPaid&&effApr(d)?`<span>≈ ${fmt(monthlyInt(d))}/mo interest</span>`:''}</div>
       ${(()=>{ const di = dueInfo(d); if(!di) return ''; const act = di.plan ? '' : di.cls==='ok' ? (di.marked ? `<span class="dueAct" data-unmark="${d.id}" data-iso="${isoLocal(di.target)}">Undo</span>` : '') : `<span class="dueAct" data-made="${d.id}">${I('check',12,2.6)}Payment made</span>`; return `<div class="dueRow"><div class="due ${di.cls}">${I(di.plan?'card':di.cls==='ok'?'check':di.cls==='miss'?'stop':'calendar',13,2.2)}${esc(di.text)}</div>${act}</div>`; })()}
     </button>`;
   };
@@ -801,8 +838,8 @@ function render(){
 }
 
 function renderUpcoming(){
-  const el = $('#upcoming'); const active = S.debts.filter(d=>balOf(d)>0);
-  if(!active.length){ el.innerHTML=''; return; }
+  const el = $('#upcoming'); const active = S.debts.filter(d=>balOf(d)>0 && !d.closed && !inDmp(d));
+  if(!active.length && !dmpDue()){ el.innerHTML=''; return; }
   const withDue = active.map(d=>({d, di:dueInfo(d)})).filter(x=>x.di);
   if(!withDue.length && !dmpDue()){ el.innerHTML = `<div class="upnote">${I('calendar',16)}Add due dates to your cards to see what's coming up.</div>`; return; }
   const dd = dmpDue(); const dItem = dd && (dd.cls==='miss' || (dd.cls!=='ok' && dd.days<=14)) ? `<button class="up ${dd.cls}" data-dmppay="1"><div class="sq" style="background:var(--ink)">${I(dd.cls==='miss'?'stop':'card',17)}</div><div><b>${esc(dmpName())} · ${fmt2(num(S.dmp.payment))}</b><span>${esc(dd.text)}</span></div></button>` : '';
@@ -972,8 +1009,12 @@ function openCard(id){
       <div class="field"><label>Minimum payment</label><div class="money"><input class="inp" id="cMin" inputmode="decimal" value="${d.min}" placeholder="75"></div></div>
     </div>
     <div class="field"><label>Payment due day (day of the month)</label><input class="inp" id="cDue" inputmode="numeric" value="${d.due||''}" placeholder="15"></div>
+    <div class="field"><label>Account status</label><div class="seg" id="cStat"><button type="button" data-st="open" class="${d.closed?'':'on'}">Active</button><button type="button" data-st="closed" class="${d.closed?'on':''}">Closed</button></div><p class="note" style="margin-top:2px">Closed accounts don't get their own due-date reminders or chips.</p></div>
+    ${d.id && balOf(d)>0 ? `<button type="button" class="paidOffBtn" id="cPaidOff">${I('checkCircle',18)}<span><b>I paid this off</b><small>Logs a final ${fmt2(balOf(d))} payment so the balance is $0</small></span></button>` : ''}
     <p class="note">APR, minimum and due date are on your statement. They power your plan, reminders and tips.</p>
     <div class="acts">${d.id?'<button class="btn danger" id="cDel">Delete</button>':'<button class="btn" id="cCancel">Cancel</button>'}<button class="btn dark" id="cSave">${d.id?'Save':'Add card'}</button></div>`);
+  if($('#cPaidOff')) $('#cPaidOff').onclick = () => { const b = balOf(d); S.payments.push({ id:uid(), debtId:d.id, amount:b, type:'payment', date:today(), note:'Paid in full', ts:Date.now() }); closeSheet(); dropAnimation(d, b, b); };
+  $('#cStat').querySelectorAll('button').forEach(b=>b.onclick=()=>$('#cStat').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)));
   $('#sheet').querySelectorAll('.sw').forEach(b=>b.onclick=()=>{ color=b.dataset.c; $('#sheet').querySelectorAll('.sw').forEach(x=>x.classList.toggle('on',x===b)); });
   if($('#cCancel')) $('#cCancel').onclick = closeSheet;
   if($('#cDel')) $('#cDel').onclick = ()=>confirmBox(`Delete ${d.name}?`,'This removes the card and its payment history.','Delete',()=>{ S.debts=S.debts.filter(x=>x.id!==d.id); S.payments=S.payments.filter(p=>p.debtId!==d.id); commit(); });
@@ -981,7 +1022,7 @@ function openCard(id){
     const name = $('#cName').value.trim(), start = num($('#cStart').value);
     if(!name){ $('#cName').focus(); toast('Give the card a name'); return; }
     if(start<=0){ $('#cStart').focus(); toast('Enter the balance you owe'); return; }
-    const rec = { id:d.id||uid(), name, color, start:round2(start), apr:round2(Math.max(0,num($('#cApr').value))), min:round2(Math.max(0,num($('#cMin').value))), due:(()=>{ const v=parseInt($('#cDue').value,10); return v>=1&&v<=31?v:''; })(), created:d.created||Date.now() };
+    const rec = { ...d, closed: $('#cStat .on').dataset.st==='closed', id:d.id||uid(), name, color, start:round2(start), apr:round2(Math.max(0,num($('#cApr').value))), min:round2(Math.max(0,num($('#cMin').value))), due:(()=>{ const v=parseInt($('#cDue').value,10); return v>=1&&v<=31?v:''; })(), created:d.created||Date.now() };
     if(d.id) S.debts = S.debts.map(x=>x.id===d.id?rec:x); else S.debts.push(rec);
     closeSheet(); commit(); toast(d.id?'Card updated':'Card added — let\'s knock it out');
   };
